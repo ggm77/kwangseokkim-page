@@ -1,0 +1,25 @@
+# Set default behavior to automatic text conversion with LF line endings
+* text=auto eol=lf
+
+# Configure Git whitespace rules to treat tabs as 4 spaces and prefer space-based indentation
+* whitespace=tab-width=4,indent-with-non-tab
+
+# Standard text file configurations to guarantee LF line endings
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+
+# Binary files (should not be touched by line-ending conversion)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
