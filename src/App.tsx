@@ -66,7 +66,7 @@ function App() {
                         수록된 음원, 영상, 이미지의 모든 저작권 및 수익권은 원작자 및 관련 권리자에게 귀속되며, 어떠한 상업적 목적으로도 사용되지 않습니다.
                     </p>
                     <p className="contact-email">
-                        저작권 관련 문의 : <a href="mailto:shm040806@gmail.com">shm040806@gmail.com</a>
+                        문의 : <a href="mailto:shm040806@gmail.com">shm040806@gmail.com</a>
                     </p>
                 </footer>
             </div>

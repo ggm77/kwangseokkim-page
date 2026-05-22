@@ -28,7 +28,7 @@
 
     color-scheme: light;
     font-family: var(--font-sans);
-    background-color: var(--bg-page);
+    background-color: #ffffff;
     color: var(--text-primary);
     margin: 0;
     padding: 0;
@@ -39,7 +39,7 @@
 
 body {
     margin: 0;
-    background-color: var(--bg-page);
+    background-color: #ffffff;
     overflow-x: hidden;
     min-height: 100vh;
 }
