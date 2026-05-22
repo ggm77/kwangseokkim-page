@@ -11,6 +11,7 @@
     flex-direction: column;
     min-height: 100vh;
     position: relative;
+    background-color: var(--bg-page);
 }
 
 /* ------------------------------------------------
@@ -18,14 +19,30 @@
    ------------------------------------------------ */
 .site-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    padding: 18px 48px;
-    background: #fff;
-    border-bottom: 1px solid rgba(160, 128, 96, 0.12);
-    position: sticky;
+    padding: 16px 48px;
+    background: rgba(255, 255, 255, 0);
+    border-bottom: 1px solid transparent;
+    position: fixed;
     top: 0;
-    z-index: 100;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    transform: translateY(-100%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.site-header.scrolled {
+    background: rgba(253, 252, 250, 0.95);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(160, 128, 96, 0.12);
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+    box-shadow: 0 4px 24px rgba(80, 50, 20, 0.08);
 }
 
 .site-logo {
@@ -54,12 +71,12 @@
 }
 
 .nav-link.active {
-    color: var(--text-bright);
-    border-bottom-color: var(--text-bright);
+    color: var(--accent-gold);
+    border-bottom-color: var(--accent-gold);
 }
 
 .nav-link:hover {
-    color: var(--text-bright);
+    color: var(--accent-gold);
 }
 
 .header-icons {
@@ -82,10 +99,11 @@
 
 .icon-btn:hover {
     background: rgba(0, 0, 0, 0.05);
+    color: var(--accent-gold);
 }
 
 /* ------------------------------------------------
-   MAIN CONTENT
+   MAIN CONTENT & AMBIENT EFFECTS
    ------------------------------------------------ */
 .app-main-content {
     flex-grow: 1;
@@ -93,14 +111,56 @@
     z-index: 1;
 }
 
+/* Modern Retro Light Leak (Film Burn) Effect */
+.smoke-ambient {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 700px;
+    background: radial-gradient(circle at 15% 0%, rgba(153, 102, 51, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 85% 5%, rgba(67, 95, 78, 0.06) 0%, transparent 55%),
+                radial-gradient(circle at 50% 20%, rgba(153, 102, 51, 0.04) 0%, transparent 65%);
+    filter: blur(60px);
+    pointer-events: none;
+    z-index: 0;
+    animation: slowFilmGlow 12s ease-in-out infinite alternate;
+}
+
+@keyframes slowFilmGlow {
+    0% {
+        opacity: 0.5;
+        transform: scale(1) translate(0, 0);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1.1) translate(-2%, 3%);
+    }
+}
+
 /* ------------------------------------------------
    HOME SECTION — Album Grid (design/home.png)
    ------------------------------------------------ */
 .home-section {
+    position: relative;
+    z-index: 1;
     max-width: 1100px;
     margin: 0 auto;
     padding: 60px 40px 80px;
     animation: fadeIn 0.6s ease;
+}
+
+.home-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100vw;
+    height: 250px;
+    background: linear-gradient(to bottom, #ffffff 0%, rgba(255, 255, 255, 0.85) 40%, transparent 100%);
+    pointer-events: none;
+    z-index: -1;
 }
 
 .home-hero {
@@ -144,20 +204,17 @@
 .album-grid-item {
     cursor: pointer;
     text-align: center;
-    transition: transform 0.35s cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
-.album-grid-item:hover {
-    transform: translateY(-6px);
+.lp-sleeve-card:hover {
+    transform: scale(1.03);
+    box-shadow: 0 20px 40px rgba(80, 50, 20, 0.2);
 }
 
-.album-grid-item:hover .lp-sleeve-card {
-    box-shadow: 0 20px 40px rgba(80, 50, 20, 0.18);
-}
-
-.album-grid-item:hover .cassette-mini-card {
-    transform: translate(8px, -6px);
-    box-shadow: 0 12px 24px rgba(80, 50, 20, 0.15);
+.cassette-mini-card:hover {
+    transform: scale(1.1) translate(-2px, -2px);
+    box-shadow: 0 16px 30px rgba(80, 50, 20, 0.25);
+    z-index: 10;
 }
 
 /* Album Cover Stack — LP sleeve + mini cassette */
@@ -175,7 +232,7 @@
     position: relative;
     overflow: hidden;
     box-shadow: 0 10px 30px rgba(80, 50, 20, 0.12);
-    transition: box-shadow 0.35s ease;
+    transition: transform 0.35s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.35s ease;
 }
 
 .sleeve-inner-glow {
@@ -220,27 +277,32 @@
 /* Cassette Mini Thumbnail */
 .cassette-mini-card {
     position: absolute;
-    right: 0;
-    bottom: 0;
+    right: -16px;
+    bottom: -16px;
     width: 42%;
     aspect-ratio: 4 / 5;
-    background: #fff;
+    background: rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
     border-radius: 5px;
-    padding: 6px;
-    box-shadow: 0 8px 20px rgba(80, 50, 20, 0.10);
-    transition: transform 0.35s ease, box-shadow 0.35s ease;
+    padding: 4px;
+    box-shadow: 0 8px 20px rgba(80, 50, 20, 0.15);
+    transition: transform 0.35s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.35s cubic-bezier(0.165, 0.84, 0.44, 1);
     z-index: 2;
 }
 
 .cassette-mini-inner {
     width: 100%;
     height: 100%;
-    background: #2a2520;
+    background: rgba(42, 37, 32, 0.45); /* Translucent smoked plastic effect */
     border-radius: 3px;
-    border-top: 6px solid;
+    border-top: 6px solid var(--accent-gold);
     display: flex;
     justify-content: center;
     align-items: center;
+    position: relative;
+    overflow: hidden;
 }
 
 .cassette-mini-window {
@@ -394,7 +456,7 @@
 .vinyl-icon-bright {
     width: 40px;
     height: 40px;
-    background: radial-gradient(circle, #ddd 18%, #444 22%, #222 50%, #444 70%, #333 100%);
+    background: radial-gradient(circle, var(--accent-gold) 18%, #444 22%, #222 50%, #444 70%, #333 100%);
     border-radius: 50%;
 }
 
@@ -452,7 +514,7 @@
     width: 100%;
     max-width: 1100px;
     margin: 0 auto;
-    padding: 32px 40px 60px;
+    padding: 100px 40px 60px;
     animation: fadeIn 0.5s ease;
 }
 
@@ -525,7 +587,7 @@
 
 .sleeve-spine {
     width: 40px;
-    border-left: 5px solid;
+    border-left: 5px solid var(--accent-gold);
     writing-mode: vertical-rl;
     text-orientation: mixed;
     display: flex;
@@ -665,6 +727,7 @@
     align-items: center;
     overflow: hidden;
     position: relative;
+    perspective: 1000px;
 }
 
 .cassette-tape-wrap {
@@ -687,24 +750,48 @@
     position: absolute;
     width: 100%;
     height: 100%;
-    border-radius: 6px;
+    border-radius: 8px; /* Restored beautiful rounded corners */
     backface-visibility: hidden;
-    background: #333;
-    border: 5px solid #2a2520;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
-    padding: 10px;
+    background: #e2e2db; /* Light grey/off-white plastic */
+    border: 1px solid #b8b8b0;
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.8), inset 0 -4px 6px rgba(0, 0, 0, 0.1), 0 6px 15px rgba(0, 0, 0, 0.4);
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .tape-front {
     z-index: 2;
+    transform: translateZ(8px);
+}
+
+.tape-back {
+    transform: rotateY(180deg) translateZ(8px);
+}
+
+/* 3D EXTRUSION LAYERS (For rounded 3D corners) */
+.tape-layer {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 8px; /* Matches front/back exactly */
+    background: #d4d4cd; /* Slightly darker than face to simulate depth/shadow */
+    border: 1px solid #c0c0b8;
+    box-sizing: border-box;
+}
+
+.tape-seam {
+    background: #b0b0a8; /* Darker line in the middle to simulate physical plastic seam */
+    border-color: #9a9a90;
 }
 
 .tape-sticker {
     width: 100%;
-    height: 100%;
+    height: calc(100% - 35px);
     background: #f4eedf;
     border-radius: 4px;
-    border-top: 14px solid;
+    border-top: 14px solid var(--accent-gold);
     padding: 8px;
     display: flex;
     flex-direction: column;
@@ -737,12 +824,13 @@
     font-size: 14px;
     font-weight: bold;
     color: var(--text-bright);
-    margin-bottom: 2px;
+    margin-bottom: 0px;
 }
 
 .album-title-sticker {
     font-size: 11px;
     color: var(--text-muted);
+    margin-top: -2px;
 }
 
 .dolby-logo {
@@ -788,12 +876,12 @@
     width: 100%;
     height: 100%;
     transform: rotate(-90deg);
+    overflow: visible;
 }
 
 .tape-wrap-color {
-    fill: none;
-    stroke: #6b4530;
-    stroke-width: 50;
+    fill: #6b4530; /* Original brown color for visibility */
+    stroke: none;
     transition: r 0.1s linear;
 }
 
@@ -849,6 +937,59 @@
     padding: 0 4px;
 }
 
+/* BOTTOM EXPOSED PLASTIC */
+.tape-bottom-plastic {
+    height: 30px;
+    width: 100%;
+    position: relative;
+    margin-top: auto;
+}
+
+.tape-bottom-plastic::before {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 20%;
+    right: 20%;
+    height: 100%;
+    background: linear-gradient(to bottom, transparent 20%, rgba(0, 0, 0, 0.05) 100%);
+    border-top: 1px solid rgba(0, 0, 0, 0.04);
+    clip-path: polygon(10% 0, 90% 0, 100% 100%, 0 100%);
+    pointer-events: none;
+}
+
+.tape-bottom-plastic .hole {
+    position: absolute;
+    border-radius: 50%;
+    background: #2a2a2a;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.5);
+    z-index: 1;
+}
+
+.tape-bottom-plastic .hole-outer-left {
+    width: 10px; height: 10px;
+    left: 6%;
+    bottom: 4px;
+}
+
+.tape-bottom-plastic .hole-outer-right {
+    width: 10px; height: 10px;
+    right: 6%;
+    bottom: 4px;
+}
+
+.tape-bottom-plastic .hole-inner-left {
+    width: 13px; height: 13px;
+    left: 26%;
+    bottom: 2px;
+}
+
+.tape-bottom-plastic .hole-inner-right {
+    width: 13px; height: 13px;
+    right: 26%;
+    bottom: 2px;
+}
+
 /* Deck Buttons — bright mechanical */
 .deck-controls-row {
     display: flex;
@@ -864,23 +1005,23 @@
 .deck-btn {
     background: linear-gradient(180deg, #f0ebe0 0%, #d9d1c2 100%);
     border: 1px solid #b0a590;
-    border-bottom: 4px solid #a09580;
     color: var(--text-primary);
     border-radius: 6px;
     cursor: pointer;
     width: 56px;
     padding: 8px 0;
-    transition: all 0.1s ease;
+    margin-bottom: 3px;
+    box-shadow: 0 3px 0 #a09580, inset 0 1px 2px rgba(255, 255, 255, 0.3);
+    transition: transform 0.5s ease-out, box-shadow 0.5s ease-out, color 0.5s ease-out, opacity 0.5s ease-out;
     outline: none;
 }
 
 .deck-btn:active,
 .deck-btn.pressed {
-    border-bottom-width: 1px;
     transform: translateY(3px);
     background: linear-gradient(180deg, #d9d1c2 0%, #c4b9a5 100%);
     color: var(--accent-gold);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 0 0 #a09580, inset 0 2px 4px rgba(0, 0, 0, 0.12);
 }
 
 .btn-cap {
@@ -1008,8 +1149,8 @@
 .platter-compartment {
     background: #c8bfaf;
     border-radius: 50%;
-    width: 320px;
-    height: 320px;
+    width: 400px;
+    height: 400px;
     margin: 0 auto 24px;
     border: 10px solid #d5ccbc;
     box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.06);
@@ -1083,8 +1224,8 @@
 }
 
 .vinyl-label-center {
-    width: 90px;
-    height: 90px;
+    width: 112px;
+    height: 112px;
     border-radius: 50%;
     display: flex;
     flex-direction: column;
@@ -1133,11 +1274,11 @@
 /* Tonearm */
 .tonearm-assembly {
     position: absolute;
-    top: 14px;
-    left: 242px;
-    width: 140px;
-    height: 250px;
-    transform-origin: 100px 30px;
+    top: 18px;
+    left: 303px;
+    width: 175px;
+    height: 313px;
+    transform-origin: 125px 38px;
     transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     z-index: 100;
     pointer-events: none;
@@ -1145,10 +1286,10 @@
 
 .tonearm-pivot-base {
     position: absolute;
-    top: 12px;
-    right: 22px;
-    width: 36px;
-    height: 36px;
+    top: 15px;
+    right: 28px;
+    width: 45px;
+    height: 45px;
     background: radial-gradient(circle, #ddd 30%, #bbb 70%);
     border: 2px solid #ccc;
     border-radius: 50%;
@@ -1169,10 +1310,10 @@
 
 .tonearm-rod {
     position: absolute;
-    top: 30px;
-    right: 37px;
-    width: 6px;
-    height: 170px;
+    top: 38px;
+    right: 46px;
+    width: 8px;
+    height: 213px;
     background: linear-gradient(90deg, #ccc 0%, #f5f5f5 50%, #bbb 100%);
     border-radius: 3px;
     box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.12);
@@ -1180,16 +1321,16 @@
 
 .tonearm-headshell {
     position: absolute;
-    top: 190px;
-    right: 25px;
-    width: 30px;
-    height: 45px;
+    top: 238px;
+    right: 31px;
+    width: 38px;
+    height: 56px;
     pointer-events: auto;
 }
 
 .stylus-cartridge {
-    width: 14px;
-    height: 28px;
+    width: 18px;
+    height: 35px;
     margin: 0 auto;
     background: #888;
     border: 1px solid #666;
@@ -1201,14 +1342,14 @@
 .stylus-cartridge::after {
     content: '';
     position: absolute;
-    bottom: -6px;
+    bottom: -8px;
     left: 50%;
     transform: translateX(-50%);
     width: 0;
     height: 0;
-    border-left: 2px solid transparent;
-    border-right: 2px solid transparent;
-    border-top: 6px solid #e0e0e0;
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+    border-top: 8px solid #e0e0e0;
 }
 
 .finger-lift {
@@ -1405,6 +1546,22 @@
     line-height: 1.5;
 }
 
+.contact-email {
+    font-size: 11px;
+    color: rgba(138, 121, 104, 0.8);
+    margin: 8px auto 0;
+}
+
+.contact-email a {
+    color: var(--accent-gold);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.contact-email a:hover {
+    text-decoration: underline;
+}
+
 /* ------------------------------------------------
    RESPONSIVENESS
    ------------------------------------------------ */
@@ -1451,12 +1608,20 @@
     }
 
     .player-page {
-        padding: 20px 16px 40px;
+        padding: 80px 16px 40px;
     }
 
     .player-main-layout {
         grid-template-columns: 1fr;
         gap: 20px;
+    }
+
+    .sleeve-column {
+        order: 2;
+    }
+
+    .player-column {
+        order: 1;
     }
 
     .cassette-deck-outer,
@@ -1474,35 +1639,53 @@
     }
 
     .platter-compartment {
-        width: 260px;
-        height: 260px;
+        width: 300px;
+        height: 300px;
     }
 
     .vinyl-label-center {
-        width: 72px;
-        height: 72px;
+        width: 80px;
+        height: 80px;
     }
 
     .tonearm-assembly {
-        right: 15px;
-        width: 100px;
-        height: 180px;
-        transform-origin: 70px 20px;
+        left: 227px;
+        width: 131px;
+        height: 234px;
+        transform-origin: 94px 28px;
     }
 
     .tonearm-pivot-base {
-        width: 28px;
-        height: 28px;
+        width: 34px;
+        height: 34px;
+        right: 20px;
+        top: 11px;
     }
 
     .tonearm-rod {
-        height: 130px;
-        right: 23px;
+        width: 6px;
+        height: 159px;
+        right: 35px;
+        top: 28px;
     }
 
     .tonearm-headshell {
-        top: 140px;
-        right: 16px;
+        width: 28px;
+        height: 42px;
+        top: 178px;
+        right: 23px;
+    }
+
+    .stylus-cartridge {
+        width: 14px;
+        height: 28px;
+    }
+
+    .stylus-cartridge::after {
+        bottom: -6px;
+        border-left: 2px solid transparent;
+        border-right: 2px solid transparent;
+        border-top: 6px solid #e0e0e0;
     }
 
     .turntable-controls-bar {

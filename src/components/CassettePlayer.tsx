@@ -6,7 +6,6 @@ export const CassettePlayer: React.FC = () => {
     const {
         activeAlbum,
         currentSide,
-        currentTrackIndex,
         currentTrack,
         playerStatus,
         currentTime,
@@ -15,7 +14,6 @@ export const CassettePlayer: React.FC = () => {
         pause,
         seekTo,
         setSide,
-        setTrackIndex,
         resetPlayer
     } = useYTPlayer();
     
@@ -27,10 +25,38 @@ export const CassettePlayer: React.FC = () => {
         }
     }, [activeAlbum, currentTrack, navigate]);
 
+    useEffect(() => {
+        // Delay the auto-play slightly so the user can clearly see
+        // the button in its unpressed state before it animates down.
+        const timer = setTimeout(() => {
+            setPlayIntent(true);
+            play();
+        }, 600); // 0.6 seconds delay
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const [isFlipped, setIsFlipped] = useState<boolean>(false);
     const [isEjecting, setIsEjecting] = useState<boolean>(false);
     const [isFF, setIsFF] = useState<boolean>(false);
     const [isREW, setIsREW] = useState<boolean>(false);
+    const [playIntent, setPlayIntent] = useState<boolean>(false);
+    const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth <= 860);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth <= 860);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    // Sync playIntent with actual player status
+    useEffect(() => {
+        if (playerStatus === "PAUSED" || playerStatus === "ENDED" || playerStatus === "UNSTARTED") {
+            setPlayIntent(false);
+        } else if (playerStatus === "PLAYING" || playerStatus === "BUFFERING") {
+            setPlayIntent(true);
+        }
+    }, [playerStatus]);
 
     const searchInterval = useRef<number | null>(null);
     // Track latest currentTime via ref so setInterval callback always has fresh value
@@ -51,19 +77,26 @@ export const CassettePlayer: React.FC = () => {
         setIsFlipped(currentSide === "B");
     }, [currentSide]);
 
+    const tracksList = currentSide === "A" ? activeAlbum?.tracksSideA : activeAlbum?.tracksSideB;
+    const sideStartTime = tracksList?.[0]?.startTime || 0;
+    const lastTrack = tracksList?.[tracksList.length - 1];
+    const sideEndTime = lastTrack ? lastTrack.startTime + lastTrack.duration : (duration || 1);
+    const sideDuration = sideEndTime - sideStartTime;
+
     // Visual Tape Amount calculation
-    // Tape progresses from left reel (supply) to right reel (take-up)
-    const progress = duration > 0 ? currentTime / duration : 0;
+    // Tape area is proportional to length, so radius grows with square root of progress
+    const clampedTime = Math.max(sideStartTime, Math.min(currentTime, sideEndTime));
+    const progress = sideDuration > 0 ? (clampedTime - sideStartTime) / sideDuration : 0;
 
-    // Outer tape wrap radius parameters (min = 28px, max = 54px for visual thickness)
-    const R_MIN = 28;
-    const R_MAX = 54;
-    const rLeft = R_MIN + (R_MAX - R_MIN) * (1 - progress);
-    const rRight = R_MIN + (R_MAX - R_MIN) * progress;
+    // Outer tape wrap radius parameters
+    const R_MIN = isMobile ? 22 : 28;
+    const R_MAX = isMobile ? 36 : 42;
+    const rLeft = Math.sqrt(R_MIN ** 2 + (R_MAX ** 2 - R_MIN ** 2) * (1 - progress));
+    const rRight = Math.sqrt(R_MIN ** 2 + (R_MAX ** 2 - R_MIN ** 2) * progress);
 
-    // FF/REW seek step: jump 2 seconds every 100ms while held → 20x speed
-    const SEEK_STEP = 2;
-    const SEEK_INTERVAL = 100;
+    // FF/REW seek step: jump 2.8 seconds every 50ms while held → 56x speed
+    const SEEK_STEP = 2.8;
+    const SEEK_INTERVAL = 50;
 
     // Handle mechanical Fast Forward (FF) — press-and-hold seeks forward
     const startFF = useCallback(() => {
@@ -108,21 +141,26 @@ export const CassettePlayer: React.FC = () => {
             searchInterval.current = null;
         }
         // Resume playback after release
+        setPlayIntent(true);
         play();
     }, [play]);
 
-    // 3D Eject and Flip animation
+    // Natural 180-degree flip animation
     const handleEject = () => {
         if (isEjecting) return;
         setIsEjecting(true);
         pause();
 
+        const nextSide = currentSide === "A" ? "B" : "A";
+        // Start CSS rotation immediately
+        setIsFlipped(nextSide === "B");
+
+        // Change text/side halfway through the flip when the tape is edge-on
         setTimeout(() => {
-            const nextSide = currentSide === "A" ? "B" : "A";
             setSide(nextSide);
-            setIsFlipped(nextSide === "B");
         }, 600);
 
+        // Unlock after flip completes
         setTimeout(() => {
             setIsEjecting(false);
         }, 1200);
@@ -143,8 +181,63 @@ export const CassettePlayer: React.FC = () => {
     else if (isFF) reelSpeedClass = "fast-forward";
     else if (isREW) reelSpeedClass = "rewind";
 
-    // List of tracks for the active side
-    const tracksList = currentSide === "A" ? activeAlbum.tracksSideA : activeAlbum.tracksSideB;
+    if (!tracksList) return null;
+
+    const renderTapeFace = (faceClass: string, faceSide: "A" | "B") => {
+        const sideName = faceSide;
+        return (
+            <div className={`cassette-tape-body ${faceClass}`}>
+                {/* Label Sticker */}
+                <div className="tape-sticker" style={{ borderTopColor: activeAlbum.coverColor }}>
+                    <div className="sticker-meta">
+                        <span className="side-indicator font-retro">{sideName}</span>
+                        <div className="sticker-titles">
+                            <div className="song-title">{activeAlbum.title}</div>
+                            <div className="album-title-sticker">김광석 (Kim Kwang-seok)</div>
+                        </div>
+                        <span className="dolby-logo">DO DO[BY SYSTEM]</span>
+                    </div>
+
+                    {/* Tape Window with transparent center and reels */}
+                    <div className="tape-window-wrapper">
+                        <div className="window-glass">
+                            {/* Supply Reel (Left) & Tape thickness */}
+                            <div className="tape-reel-hub left-reel">
+                                <svg className="tape-wrap-svg">
+                                    <circle cx="50%" cy="50%" r={rLeft} className="tape-wrap-color" />
+                                    <circle cx="50%" cy="50%" r={R_MIN} className="tape-reel-spokes-bg" />
+                                </svg>
+                                <div className={`spindle-gear ${reelSpeedClass}`}></div>
+                            </div>
+
+                            {/* Take-up Reel (Right) & Tape thickness */}
+                            <div className="tape-reel-hub right-reel">
+                                <svg className="tape-wrap-svg">
+                                    <circle cx="50%" cy="50%" r={rRight} className="tape-wrap-color" />
+                                    <circle cx="50%" cy="50%" r={R_MIN} className="tape-reel-spokes-bg" />
+                                </svg>
+                                <div className={`spindle-gear ${reelSpeedClass}`}></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="tape-footer-details">
+                        <span>NR [ON]</span>
+                        <span>CrO2 BIAS</span>
+                        <span>120µs EQ</span>
+                    </div>
+                </div>
+
+                {/* Bottom Exposed Magnetic Tape Area */}
+                <div className="tape-bottom-plastic">
+                    <div className="hole hole-outer-left"></div>
+                    <div className="hole hole-inner-left"></div>
+                    <div className="hole hole-inner-right"></div>
+                    <div className="hole hole-outer-right"></div>
+                </div>
+            </div>
+        );
+    };
 
     return (
         <div className="player-page cassette-page-container">
@@ -164,7 +257,7 @@ export const CassettePlayer: React.FC = () => {
 
             <div className="player-main-layout">
                 {/* Left: Disguised Youtube Iframe (The "Album Sleeve") */}
-                <div className="sleeve-column PC-only">
+                <div className="sleeve-column">
                     <div className="cassette-sleeve-frame">
                         <div className="sleeve-card" style={{ backgroundColor: activeAlbum.coverColor }}>
                             <div className="sleeve-j-card">
@@ -192,12 +285,7 @@ export const CassettePlayer: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Mobile YouTube Box */}
-                <div className="mobile-player-box mobile-only">
-                    <div className="youtube-player-frame-outer">
-                        <div id="yt-hidden-player-mobile-placeholder"></div>
-                    </div>
-                </div>
+
 
                 {/* Right/Center: Large Interactive Cassette Player */}
                 <div className="player-column">
@@ -212,50 +300,23 @@ export const CassettePlayer: React.FC = () => {
 
                         {/* The 3D Rotating Cassette Tape */}
                         <div className="tape-compartment">
-                            <div className={`cassette-tape-wrap ${isEjecting ? "eject-anim" : ""} ${isFlipped ? "flipped-side" : ""}`}>
-                                {/* Cassette Front Side */}
-                                <div className="cassette-tape-body tape-front">
-                                    {/* Label Sticker */}
-                                    <div className="tape-sticker" style={{ borderTopColor: activeAlbum.coverColor }}>
-                                        <div className="sticker-meta">
-                                            <span className="side-indicator font-retro">{currentSide}</span>
-                                            <div className="sticker-titles">
-                                                <div className="song-title">{currentTrack.title}</div>
-                                                <div className="album-title-sticker">{activeAlbum.title}</div>
-                                            </div>
-                                            <span className="dolby-logo">DO DO[BY SYSTEM]</span>
-                                        </div>
-
-                                        {/* Tape Window with transparent center and reels */}
-                                        <div className="tape-window-wrapper">
-                                            <div className="window-glass">
-                                                {/* Supply Reel (Left) & Tape thickness */}
-                                                <div className="tape-reel-hub left-reel">
-                                                    <svg className="tape-wrap-svg">
-                                                        <circle cx="50" cy="50" r={rLeft} className="tape-wrap-color" />
-                                                        <circle cx="50" cy="50" r="28" className="tape-reel-spokes-bg" />
-                                                    </svg>
-                                                    <div className={`spindle-gear ${reelSpeedClass}`}></div>
-                                                </div>
-
-                                                {/* Take-up Reel (Right) & Tape thickness */}
-                                                <div className="tape-reel-hub right-reel">
-                                                    <svg className="tape-wrap-svg">
-                                                        <circle cx="50" cy="50" r={rRight} className="tape-wrap-color" />
-                                                        <circle cx="50" cy="50" r="28" className="tape-reel-spokes-bg" />
-                                                    </svg>
-                                                    <div className={`spindle-gear ${reelSpeedClass}`}></div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="tape-footer-details">
-                                            <span>NR [ON]</span>
-                                            <span>CrO2 BIAS</span>
-                                            <span>120µs EQ</span>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div className={`cassette-tape-wrap ${isFlipped ? "flipped-side" : ""}`}>
+                                {/* 3D Extrusion Layers (Rounded Corners) */}
+                                {Array.from({ length: 15 }).map((_, i) => {
+                                    const zOffset = 7 - i;
+                                    const isSeam = zOffset === 0;
+                                    return (
+                                        <div 
+                                            key={i} 
+                                            className={`tape-layer ${isSeam ? 'tape-seam' : ''}`} 
+                                            style={{ transform: `translateZ(${zOffset}px)` }}
+                                        ></div>
+                                    );
+                                })}
+                                
+                                {/* Cassette Faces */}
+                                {renderTapeFace("tape-front", "A")}
+                                {renderTapeFace("tape-back", "B")}
                             </div>
                         </div>
 
@@ -289,9 +350,9 @@ export const CassettePlayer: React.FC = () => {
 
                             {/* Play Button */}
                             <button
-                                className={`deck-btn btn-play ${playerStatus === "PLAYING" ? "pressed" : ""}`}
-                                onClick={play}
-                                disabled={playerStatus === "PLAYING"}
+                                className={`deck-btn btn-play ${playIntent || playerStatus === "PLAYING" || playerStatus === "BUFFERING" ? "pressed" : ""}`}
+                                onClick={() => { setPlayIntent(true); play(); }}
+                                disabled={playerStatus === "PLAYING" || playerStatus === "BUFFERING"}
                             >
                                 <div className="btn-cap"><span className="icon">&#9658;</span><span className="label">PLAY</span></div>
                             </button>
@@ -314,21 +375,7 @@ export const CassettePlayer: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Detailed track selection panel below player on PC/Mobile */}
-                    <div className="track-selector-widget glass-effect">
-                        <h3>트랙 다이렉트 선택</h3>
-                        <div className="track-badges">
-                            {tracksList.map((t, idx) => (
-                                <button
-                                    key={idx}
-                                    className={`track-badge-btn ${idx === currentTrackIndex ? "active" : ""}`}
-                                    onClick={() => setTrackIndex(idx)}
-                                >
-                                    <span className="badge-num">{idx + 1}</span> {t.title}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
+
                 </div>
             </div>
         </div>

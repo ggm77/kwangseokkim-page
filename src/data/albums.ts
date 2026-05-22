@@ -13,6 +13,10 @@ export interface Album {
     coverColor: string;
     textColor: string;
     accentColor: string;
+    imageFront: string;
+    imageBack: string;
+    coverScale?: number;
+    coverOffsetY?: string;
     tracksSideA: Track[];
     tracksSideB: Track[];
 }
@@ -20,12 +24,15 @@ export interface Album {
 export const ALBUMS: Album[] = [
     {
         id: "1",
-        title: "1집: 김광석 1",
+        title: "김광석 1",
         subtitle: "너에게 / 내 꿈",
         year: "1989",
-        coverColor: "#b24c3d",
+        coverColor: "#996633",
         textColor: "#ffffff",
-        accentColor: "#f39c12",
+        accentColor: "#435f4e",
+        imageFront: "https://kimkwangseok.com/data/file/gallery/d037fb2c1c053b73cbfad02704046b42_CtuoYPwe_4fb363c07863a1d937b86358f2f410f9427bfb9d.jpg",
+        imageBack: "https://kimkwangseok.com/data/file/gallery/d037fb2c1c053b73cbfad02704046b42_IaX5bDQ7_2fc68a06c68195087479ed2b4f56cd83a73ed428.jpg",
+        coverScale: 1.34,
         tracksSideA: [
             { title: "너에게", duration: 241, startTime: 0, youtubeId: "j5WoM_7CsGQ" },
             { title: "내 꿈", duration: 207, startTime: 241, youtubeId: "j5WoM_7CsGQ" },
@@ -43,12 +50,15 @@ export const ALBUMS: Album[] = [
     },
     {
         id: "2",
-        title: "2집: 김광석 2nd",
+        title: "김광석 2nd",
         subtitle: "사랑했지만 / 꽃",
         year: "1991",
-        coverColor: "#2c3e50",
+        coverColor: "#435f4e",
         textColor: "#ffffff",
-        accentColor: "#1abc9c",
+        accentColor: "#996633",
+        imageFront: "https://kimkwangseok.com/data/file/gallery/d037fb2c1c053b73cbfad02704046b42_oJrRZGFC_bb3c65729325f40e1581e2e68622deb957c74beb.jpg",
+        imageBack: "https://kimkwangseok.com/data/file/gallery/d037fb2c1c053b73cbfad02704046b42_pxFGatwR_5b0f7d0f37f0d666ed21110c6aa1bbb0bf3e8071.jpg",
+        coverScale: 1.38,
         tracksSideA: [
             { title: "사랑했지만", duration: 266, startTime: 0, youtubeId: "gy31KUNcvk0" },
             { title: "꽃", duration: 271, startTime: 266, youtubeId: "gy31KUNcvk0" },
@@ -66,12 +76,15 @@ export const ALBUMS: Album[] = [
     },
     {
         id: "3",
-        title: "3집: 김광석 3번째 노래모음",
+        title: "김광석 3번째 노래모음",
         subtitle: "나의 노래 / 잊어야 한다는 마음으로",
         year: "1992",
-        coverColor: "#27ae60",
+        coverColor: "#996633",
         textColor: "#ffffff",
-        accentColor: "#f1c40f",
+        accentColor: "#435f4e",
+        imageFront: "https://kimkwangseok.com/data/file/gallery/d037fb2c1c053b73cbfad02704046b42_oFzhUCGf_7ad2658ce5ada83dbe20b4562912a0f575afe5ea.jpg",
+        imageBack: "https://kimkwangseok.com/data/file/gallery/d037fb2c1c053b73cbfad02704046b42_ilVZ5C6f_8ed25d1342e9b7d2fa154cc230389327d899d650.jpg",
+        coverScale: 1.36,
         tracksSideA: [
             { title: "序 자장가", duration: 56, startTime: 0, youtubeId: "RpAIP5A2BDI" },
             { title: "나의 노래", duration: 233, startTime: 56, youtubeId: "RpAIP5A2BDI" },
@@ -89,12 +102,15 @@ export const ALBUMS: Album[] = [
     },
     {
         id: "4",
-        title: "4집: 김광석 네번째",
+        title: "김광석 네번째",
         subtitle: "일어나 / 서른 즈음에",
         year: "1994",
-        coverColor: "#7e5233",
+        coverColor: "#435f4e",
         textColor: "#ffffff",
-        accentColor: "#e67e22",
+        accentColor: "#996633",
+        imageFront: "https://kimkwangseok.com/data/file/gallery/d037fb2c1c053b73cbfad02704046b42_h6uIJcFO_cdf9089794cdc2aaca3fa85ed63ff61fa45460f1.jpg",
+        imageBack: "https://kimkwangseok.com/data/file/gallery/d037fb2c1c053b73cbfad02704046b42_UF7nPHu4_36587731b6de579038832360db3381d9719578ce.jpg",
+        coverScale: 1.34,
         tracksSideA: [
             { title: "일어나", duration: 271, startTime: 0, youtubeId: "jr0quTBBphc" },
             { title: "바람이 불어오는 곳", duration: 204, startTime: 271, youtubeId: "jr0quTBBphc" },
@@ -112,12 +128,15 @@ export const ALBUMS: Album[] = [
     },
     {
         id: "5",
-        title: "김광석 다시 부르기 1",
+        title: "다시 부르기 1",
         subtitle: "이등병의 편지 / 거리에서",
         year: "1993",
-        coverColor: "#8e44ad",
+        coverColor: "#996633",
         textColor: "#ffffff",
-        accentColor: "#9b59b6",
+        accentColor: "#435f4e",
+        imageFront: "https://kimkwangseok.com/data/file/gallery/ef6598181a1dc339218f7d95462b7cde_W43dzUDk_fd4e335f17d20dd890e9c0fb28e373072592fa77.jpg",
+        imageBack: "https://kimkwangseok.com/data/file/gallery/ef6598181a1dc339218f7d95462b7cde_sTt3cR8Z_26da0518d37cacf70d5024ec56a3c5f0471bd2c6.jpg",
+        coverScale: 1.34,
         tracksSideA: [
             { title: "이등병의 편지", duration: 289, startTime: 0, youtubeId: "19FlqiyplIs" },
             { title: "사랑이라는 이유로", duration: 235, startTime: 289, youtubeId: "19FlqiyplIs" },
@@ -138,12 +157,16 @@ export const ALBUMS: Album[] = [
     },
     {
         id: "6",
-        title: "김광석 다시 부르기 2",
+        title: "다시 부르기 2",
         subtitle: "그녀가 처음 울던 날 / 두 바퀴로 가는 자동차",
         year: "1995",
-        coverColor: "#16a085",
+        coverColor: "#435f4e",
         textColor: "#ffffff",
-        accentColor: "#e74c3c",
+        accentColor: "#996633",
+        imageFront: "https://kimkwangseok.com/data/file/gallery/d037fb2c1c053b73cbfad02704046b42_LmQkxK3n_cd0c978af7c70db04616ac9a0489debdc4a10c22.jpg",
+        imageBack: "https://kimkwangseok.com/data/file/gallery/d037fb2c1c053b73cbfad02704046b42_szBCAK9k_af1c8e94692ec60c5d4b426702f4dc8d1a28a9a9.jpg",
+        coverScale: 1.6,
+        coverOffsetY: "5%",
         tracksSideA: [
             { title: "바람과 나", duration: 237, startTime: 0, youtubeId: "wwiWitiwdso" },
             { title: "그녀가 처음 울던 날", duration: 176, startTime: 237, youtubeId: "wwiWitiwdso" },

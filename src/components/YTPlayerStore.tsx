@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from "react";
 import type { Album, Track } from "../data/albums";
+import { ALBUMS } from "../data/albums";
 
 
 // Extend Window interface for YouTube API
@@ -28,8 +29,10 @@ interface YTPlayerContextType {
   selectMedia: (media: "lp" | "cassette" | null) => void;
   play: () => void;
   pause: () => void;
+  stop: () => void;
   togglePlay: () => void;
   seekTo: (seconds: number) => void;
+  initPlayerNow: () => void;
   setSide: (side: "A" | "B") => void;
   setTrackIndex: (index: number) => void;
   toggleMute: () => void;
@@ -51,7 +54,15 @@ export const useYTPlayer = () => {
 };
 
 export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [activeAlbum, setActiveAlbum] = useState<Album | null>(null);
+  const [activeAlbum, setActiveAlbum] = useState<Album | null>(() => {
+    try {
+      const saved = sessionStorage.getItem("activeAlbumId");
+      if (saved) {
+        return ALBUMS.find(a => String(a.id) === saved) || null;
+      }
+    } catch(e) {}
+    return null;
+  });
   const [activeMedia, setActiveMedia] = useState<"lp" | "cassette" | null>(null);
   const [currentSide, setCurrentSide] = useState<"A" | "B">("A");
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
@@ -100,12 +111,6 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const initPlayer = () => {
       let containerId = iframeContainerId;
       let el = document.getElementById(containerId);
-      
-      const mobileEl = document.getElementById("yt-hidden-player-mobile-placeholder");
-      if (mobileEl && window.innerWidth <= 860) {
-          containerId = "yt-hidden-player-mobile-placeholder";
-          el = mobileEl;
-      }
 
       // Check if div exists. If not, wait.
       if (!el) {
@@ -135,9 +140,9 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           // It's an IFRAME, reuse it
           if (typeof playerRef.current.loadVideoById === "function") {
             playerRef.current.loadVideoById({
-            videoId: currentTrack.youtubeId,
-            startSeconds: currentTrack.startTime
-          });
+              videoId: currentTrack.youtubeId,
+              startSeconds: currentTrack.startTime
+            });
             setPlayerStatus("BUFFERING");
           }
           return;
@@ -152,7 +157,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         width: "100%",
         videoId: currentTrack.youtubeId,
         playerVars: {
-          autoplay: 0,
+          autoplay: 1,
           controls: 0, // Hide native controls
           start: currentTrack.startTime,
           disablekb: 1,
@@ -172,7 +177,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               event.target.unMute();
             }
             setDuration(event.target.getDuration() || currentTrack.duration);
-            // event.target.playVideo();
+            event.target.playVideo();
           },
           onStateChange: (event: any) => {
             const state = event.data;
@@ -207,6 +212,75 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       };
     }
   }, [currentTrack]);
+
+  const initPlayerNow = () => {
+    if (!currentTrack) return;
+    const containerId = iframeContainerId;
+    const el = document.getElementById(containerId);
+    if (!el) return;
+
+    if (playerRef.current) {
+      if (typeof playerRef.current.getPlayerState === "function") {
+        if (typeof playerRef.current.loadVideoById === "function") {
+          playerRef.current.loadVideoById({
+            videoId: currentTrack.youtubeId,
+            startSeconds: currentTrack.startTime
+          });
+          setPlayerStatus("BUFFERING");
+        }
+        return;
+      }
+    }
+
+    if (el.getAttribute('data-yt-init') === 'true') return;
+    el.setAttribute('data-yt-init', 'true');
+
+    playerRef.current = new window.YT.Player(containerId, {
+      height: "100%",
+      width: "100%",
+      videoId: currentTrack.youtubeId,
+      playerVars: {
+        autoplay: 1,
+        controls: 0,
+        start: currentTrack.startTime,
+        disablekb: 1,
+        fs: 0,
+        rel: 0,
+        showinfo: 0,
+        modestbranding: 1,
+        iv_load_policy: 3,
+        origin: window.location.origin
+      },
+      events: {
+        onReady: (event: any) => {
+          event.target.setVolume(volume);
+          if (isMuted) {
+            event.target.mute();
+          } else {
+            event.target.unMute();
+          }
+          setDuration(event.target.getDuration() || currentTrack.duration);
+          event.target.playVideo();
+        },
+        onStateChange: (event: any) => {
+          const state = event.data;
+          let statusStr: PlayerStatus = "UNSTARTED";
+          if (state === window.YT.PlayerState.PLAYING) statusStr = "PLAYING";
+          else if (state === window.YT.PlayerState.PAUSED) statusStr = "PAUSED";
+          else if (state === window.YT.PlayerState.BUFFERING) statusStr = "BUFFERING";
+          else if (state === window.YT.PlayerState.ENDED) statusStr = "ENDED";
+          else if (state === window.YT.PlayerState.CUED) statusStr = "CUED";
+          setPlayerStatus(statusStr);
+          if (state === window.YT.PlayerState.PLAYING) {
+            setDuration(event.target.getDuration() || currentTrack.duration);
+          }
+          if (state === window.YT.PlayerState.ENDED) {
+            handleTrackEnd();
+          }
+        }
+      }
+    });
+  };
 
   // 3. Time polling interval
   useEffect(() => {
@@ -256,6 +330,13 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const selectAlbum = (album: Album | null) => {
     setActiveAlbum(album);
+    try {
+      if (album) {
+        sessionStorage.setItem("activeAlbumId", String(album.id));
+      } else {
+        sessionStorage.removeItem("activeAlbumId");
+      }
+    } catch(e) {}
     setCurrentSide("A");
     setCurrentTrackIndex(0);
     setCurrentTime(0);
@@ -274,6 +355,13 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const pause = () => {
     if (playerRef.current && typeof playerRef.current.pauseVideo === "function") {
       playerRef.current.pauseVideo();
+    }
+  };
+
+  const stop = () => {
+    if (playerRef.current && typeof playerRef.current.stopVideo === "function") {
+      playerRef.current.stopVideo();
+      setPlayerStatus("UNSTARTED");
     }
   };
 
@@ -369,6 +457,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         selectMedia,
         play,
         pause,
+        stop,
         togglePlay,
         seekTo,
         setSide,
@@ -376,6 +465,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         toggleMute,
         setVolume,
         resetPlayer,
+        initPlayerNow,
         iframeContainerId
       }}
     >
