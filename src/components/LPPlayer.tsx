@@ -33,12 +33,12 @@ export const LPPlayer: React.FC = () => {
     const platterRef = useRef<HTMLDivElement>(null);
 
     // Rotation angles for the tonearm needle:
-    // -12deg: resting position (off record)
-    //  12deg: outer edge of record (0% of track — start)
-    //  36deg: inner edge of record (100% of track — end)
-    const ANGLE_REST = -12;
-    const ANGLE_OUTER = 12;
-    const ANGLE_INNER = 36;
+    // -5deg: resting position (off record)
+    //  14deg: outer edge of record (0% of track — start)
+    //  44deg: inner edge of record (100% of track — end)
+    const ANGLE_REST = -5;
+    const ANGLE_OUTER = 14;
+    const ANGLE_INNER = 44;
 
     // Calculate current tonearm angle from playback progress
     const progress = duration > 0 ? currentTime / duration : 0;
@@ -74,9 +74,7 @@ export const LPPlayer: React.FC = () => {
         seekTo(targetSeconds);
         
         if (playerStatus !== "PLAYING" && playerStatus !== "BUFFERING") {
-            setTimeout(() => {
-                play();
-            }, 300);
+            play();
         }
     };
 
@@ -118,11 +116,7 @@ export const LPPlayer: React.FC = () => {
                                     <h4>SIDE {currentSide} SELECTIONS</h4>
                                     <ol>
                                         {tracksList.map((t, idx) => (
-                                            <li
-                                                key={idx}
-                                                className={idx === currentTrackIndex ? "active-track" : ""}
-                                                onClick={() => setTrackIndex(idx)}
-                                            >
+                                            <li key={idx}>
                                                 {t.title} ({Math.floor(t.duration / 60)}:{(t.duration % 60).toString().padStart(2, "0")})
                                             </li>
                                         ))}
@@ -131,6 +125,11 @@ export const LPPlayer: React.FC = () => {
                             </div>
                         </div>
                     </div>
+                </div>
+
+                {/* Mobile Hidden YouTube Player (Audio Only since Turntable is main) */}
+                <div className="mobile-only" style={{ position: 'absolute', top: '-9999px', width: '10px', height: '10px', overflow: 'hidden' }}>
+                    <div id="yt-hidden-player-mobile-placeholder"></div>
                 </div>
 
                 {/* Right/Center: Large Draggable Turntable */}
@@ -175,7 +174,6 @@ export const LPPlayer: React.FC = () => {
 
                                 <div className="tonearm-headshell">
                                     <div className="stylus-cartridge"></div>
-                                    <div className="finger-lift"></div>
                                 </div>
                             </div>
                         </div>
@@ -238,7 +236,8 @@ export const LPPlayer: React.FC = () => {
                     {/* Draggable needle manual helper block */}
                     <div className="stylus-instruction-box glass-effect">
                         <p>
-                            💡 <strong>아날로그 조작법:</strong> 회전 중인 LP 판의 원하는 위치를 <strong>클릭</strong>하여 해당 음악 시간대로 자동 점프합니다. 중심에 가까울수록 곡의 후반부입니다.
+                            💡 <strong>아날로그 조작법:</strong> 회전 중인 LP 판의 원하는 위치를 <strong>클릭</strong>하여 해당 음악 시간대로 자동 점프합니다. 중심에 가까울수록 곡의 후반부입니다. <br/>
+                            <span style={{ fontSize: '11px', opacity: 0.8 }}>(* 톤암은 실제 기기처럼 우측의 궤적을 따라서만 움직이며, 클릭하신 위치의 '반지름'에 맞춰 바늘이 이동합니다.)</span>
                         </p>
                     </div>
                 </div>

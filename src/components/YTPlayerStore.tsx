@@ -98,37 +98,70 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
 
     const initPlayer = () => {
+      let containerId = iframeContainerId;
+      let el = document.getElementById(containerId);
+      
+      const mobileEl = document.getElementById("yt-hidden-player-mobile-placeholder");
+      if (mobileEl && window.innerWidth <= 860) {
+          containerId = "yt-hidden-player-mobile-placeholder";
+          el = mobileEl;
+      }
+
       // Check if div exists. If not, wait.
-      const el = document.getElementById(iframeContainerId);
       if (!el) {
         setTimeout(initPlayer, 100);
         return;
       }
 
-      // If player already exists, load the new video
-      if (playerRef.current && typeof playerRef.current.loadVideoById === "function") {
-        playerRef.current.loadVideoById({
-          videoId: currentTrack.youtubeId,
-          startSeconds: 0
-        });
-        setPlayerStatus("BUFFERING");
-        return;
+      // If player already exists
+      if (playerRef.current) {
+        if (el.tagName !== "IFRAME") {
+          // It's still a DIV. Either it's initializing, or it's a dead reference.
+          // If we already marked it as initializing, wait.
+          if (el.hasAttribute('data-yt-init')) {
+            setTimeout(initPlayer, 100);
+            return;
+          }
+          // Dead reference, destroy it
+          try {
+            if (typeof playerRef.current.destroy === "function") {
+              playerRef.current.destroy();
+            }
+          } catch (e) {
+            console.error(e);
+          }
+          playerRef.current = null;
+        } else {
+          // It's an IFRAME, reuse it
+          if (typeof playerRef.current.loadVideoById === "function") {
+            playerRef.current.loadVideoById({
+            videoId: currentTrack.youtubeId,
+            startSeconds: currentTrack.startTime
+          });
+            setPlayerStatus("BUFFERING");
+          }
+          return;
+        }
       }
 
+      el.setAttribute('data-yt-init', 'true');
+
       // Create new player
-      playerRef.current = new window.YT.Player(iframeContainerId, {
+      playerRef.current = new window.YT.Player(containerId, {
         height: "100%",
         width: "100%",
         videoId: currentTrack.youtubeId,
         playerVars: {
-          autoplay: 1,
+          autoplay: 0,
           controls: 0, // Hide native controls
+          start: currentTrack.startTime,
           disablekb: 1,
           fs: 0,
           rel: 0,
           showinfo: 0,
           modestbranding: 1,
-          iv_load_policy: 3
+          iv_load_policy: 3,
+          origin: window.location.origin
         },
         events: {
           onReady: (event: any) => {
@@ -139,7 +172,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               event.target.unMute();
             }
             setDuration(event.target.getDuration() || currentTrack.duration);
-            event.target.playVideo();
+            // event.target.playVideo();
           },
           onStateChange: (event: any) => {
             const state = event.data;
@@ -263,13 +296,18 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const setSide = (side: "A" | "B") => {
     setCurrentSide(side);
     setCurrentTrackIndex(0);
-    setCurrentTime(0);
+    if (activeAlbum) {
+      const newTracks = side === "A" ? activeAlbum.tracksSideA : activeAlbum.tracksSideB;
+      setCurrentTime(newTracks[0]?.startTime || 0);
+    } else {
+      setCurrentTime(0);
+    }
   };
 
   const setTrackIndex = (index: number) => {
     if (index >= 0 && index < tracks.length) {
       setCurrentTrackIndex(index);
-      setCurrentTime(0);
+      setCurrentTime(tracks[index].startTime);
     }
   };
 

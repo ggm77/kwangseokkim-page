@@ -61,9 +61,9 @@ export const CassettePlayer: React.FC = () => {
     const rLeft = R_MIN + (R_MAX - R_MIN) * (1 - progress);
     const rRight = R_MIN + (R_MAX - R_MIN) * progress;
 
-    // FF/REW seek step: jump 5 seconds every 150ms while held → ~33x speed
-    const SEEK_STEP = 5;
-    const SEEK_INTERVAL = 150;
+    // FF/REW seek step: jump 2 seconds every 100ms while held → 20x speed
+    const SEEK_STEP = 2;
+    const SEEK_INTERVAL = 100;
 
     // Handle mechanical Fast Forward (FF) — press-and-hold seeks forward
     const startFF = useCallback(() => {
@@ -180,11 +180,7 @@ export const CassettePlayer: React.FC = () => {
                                         <h4>SIDE {currentSide} TRACKS</h4>
                                         <ol>
                                             {tracksList.map((t, idx) => (
-                                                <li
-                                                    key={idx}
-                                                    className={idx === currentTrackIndex ? "active-track" : ""}
-                                                    onClick={() => setTrackIndex(idx)}
-                                                >
+                                                <li key={idx}>
                                                     {t.title} ({Math.floor(t.duration / 60)}:{(t.duration % 60).toString().padStart(2, "0")})
                                                 </li>
                                             ))}
