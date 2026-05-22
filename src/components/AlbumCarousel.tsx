@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { flushSync } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { ALBUMS } from "../data/albums";
@@ -71,21 +71,29 @@ export const AlbumCarousel: React.FC = () => {
                                 />
                                 <div style={{
                                     position: 'absolute',
-                                    bottom: 0, left: 0, right: 0,
-                                    backgroundColor: 'rgba(20, 15, 10, 0.85)',
+                                    top: '8px',
+                                    left: '8px',
+                                    backgroundColor: 'rgba(20, 15, 10, 0.75)',
                                     backdropFilter: 'blur(4px)',
                                     color: 'rgba(255, 255, 255, 0.95)',
-                                    fontSize: '10px',
+                                    padding: '4px 8px',
+                                    borderRadius: '12px',
+                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                    zIndex: 1,
+                                    display: 'flex',
+                                    gap: '4px',
+                                    justifyContent: 'center',
+                                    alignItems: 'center',
                                     fontFamily: 'var(--font-mono, monospace)',
+                                    fontSize: '10px',
                                     fontWeight: 600,
-                                    letterSpacing: '0.15em',
-                                    padding: '5px 0',
-                                    textAlign: 'center',
-                                    borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-                                    textTransform: 'uppercase',
-                                    zIndex: 1
+                                    letterSpacing: '0.05em'
                                 }}>
-                                    LP
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                    <span>LP</span>
                                 </div>
                             </div>
                             

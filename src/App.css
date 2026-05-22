@@ -1545,6 +1545,22 @@
     line-height: 1.5;
 }
 
+.contact-email {
+    font-size: 11px;
+    color: rgba(138, 121, 104, 0.8);
+    margin: 8px auto 0;
+}
+
+.contact-email a {
+    color: var(--accent-gold);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.contact-email a:hover {
+    text-decoration: underline;
+}
+
 /* ------------------------------------------------
    RESPONSIVENESS
    ------------------------------------------------ */

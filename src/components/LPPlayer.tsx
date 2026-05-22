@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useYTPlayer } from "./YTPlayerStore";
 
@@ -6,18 +6,15 @@ export const LPPlayer: React.FC = () => {
     const {
         activeAlbum,
         currentSide,
-        currentTrackIndex,
         currentTrack,
         playerStatus,
         currentTime,
         duration,
         play,
         pause,
-        stop,
         togglePlay,
         seekTo,
         setSide,
-        setTrackIndex,
         resetPlayer
     } = useYTPlayer();
     
@@ -187,7 +184,7 @@ export const LPPlayer: React.FC = () => {
                                 <div className="tracklist-sleeve">
                                     <h4>SIDE {currentSide} SELECTIONS</h4>
                                     <ol>
-                                        {tracksList.map((t, idx) => (
+                                        {tracksList?.map((t, idx) => (
                                             <li key={idx}>
                                                 {t.title} ({Math.floor(t.duration / 60)}:{(t.duration % 60).toString().padStart(2, "0")})
                                             </li>

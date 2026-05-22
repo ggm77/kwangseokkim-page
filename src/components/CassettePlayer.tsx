@@ -6,7 +6,6 @@ export const CassettePlayer: React.FC = () => {
     const {
         activeAlbum,
         currentSide,
-        currentTrackIndex,
         currentTrack,
         playerStatus,
         currentTime,
@@ -15,7 +14,6 @@ export const CassettePlayer: React.FC = () => {
         pause,
         seekTo,
         setSide,
-        setTrackIndex,
         resetPlayer
     } = useYTPlayer();
     
