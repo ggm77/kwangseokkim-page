@@ -220,7 +220,7 @@ export const LPPlayer: React.FC = () => {
                                     {/* Vinyl Record Center Sticker Label */}
                                     <div className="vinyl-label-center" style={{ backgroundColor: activeAlbum.coverColor }}>
                                         <div className="label-album-title">{activeAlbum.title}</div>
-                                        <div className="label-track-title">{currentTrack.title}</div>
+                                        <div className="label-track-title">김광석 (Kim Kwang-seok)</div>
                                         <div className="label-side-indicator">SIDE {currentSide}</div>
                                         <div className="label-spindle-hole"></div>
                                     </div>

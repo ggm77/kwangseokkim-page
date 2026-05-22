@@ -146,7 +146,7 @@ export const AlbumCarousel: React.FC = () => {
                         </div>
                         {/* Album Info */}
                         <div className="album-grid-info">
-                            <h3 className="album-grid-title">{album.title.replace("김광석 ", "")}</h3>
+                            <h3 className="album-grid-title">{album.title}</h3>
                             <p className="album-grid-year">{album.year}</p>
                         </div>
                     </div>

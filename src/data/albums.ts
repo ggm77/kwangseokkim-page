@@ -24,7 +24,7 @@ export interface Album {
 export const ALBUMS: Album[] = [
     {
         id: "1",
-        title: "1집: 김광석 1",
+        title: "김광석 1",
         subtitle: "너에게 / 내 꿈",
         year: "1989",
         coverColor: "#996633",
@@ -50,7 +50,7 @@ export const ALBUMS: Album[] = [
     },
     {
         id: "2",
-        title: "2집: 김광석 2nd",
+        title: "김광석 2nd",
         subtitle: "사랑했지만 / 꽃",
         year: "1991",
         coverColor: "#435f4e",
@@ -76,7 +76,7 @@ export const ALBUMS: Album[] = [
     },
     {
         id: "3",
-        title: "3집: 김광석 3번째 노래모음",
+        title: "김광석 3번째 노래모음",
         subtitle: "나의 노래 / 잊어야 한다는 마음으로",
         year: "1992",
         coverColor: "#996633",
@@ -102,7 +102,7 @@ export const ALBUMS: Album[] = [
     },
     {
         id: "4",
-        title: "4집: 김광석 네번째",
+        title: "김광석 네번째",
         subtitle: "일어나 / 서른 즈음에",
         year: "1994",
         coverColor: "#435f4e",
@@ -128,7 +128,7 @@ export const ALBUMS: Album[] = [
     },
     {
         id: "5",
-        title: "김광석 다시 부르기 1",
+        title: "다시 부르기 1",
         subtitle: "이등병의 편지 / 거리에서",
         year: "1993",
         coverColor: "#996633",
@@ -157,7 +157,7 @@ export const ALBUMS: Album[] = [
     },
     {
         id: "6",
-        title: "김광석 다시 부르기 2",
+        title: "다시 부르기 2",
         subtitle: "그녀가 처음 울던 날 / 두 바퀴로 가는 자동차",
         year: "1995",
         coverColor: "#435f4e",
