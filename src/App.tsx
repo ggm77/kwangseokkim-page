@@ -1,9 +1,36 @@
+import React, { useState, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Link, useLocation } from "react-router-dom";
 import { YTPlayerProvider, useYTPlayer } from "./components/YTPlayerStore";
 import { AlbumCarousel } from "./components/AlbumCarousel";
 import { LPPlayer } from "./components/LPPlayer";
 import { CassettePlayer } from "./components/CassettePlayer";
 import "./App.css";
+
+const Header: React.FC = () => {
+    const [isScrolled, setIsScrolled] = useState(false);
+    const location = useLocation();
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 150);
+        };
+        window.addEventListener("scroll", handleScroll);
+        // Trigger once on mount
+        handleScroll();
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
+
+    const isMainPage = location.pathname === "/";
+    const showHeader = !isMainPage || isScrolled;
+
+    return (
+        <header className={`site-header ${showHeader ? "scrolled" : ""}`}>
+            <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+                <h1 className="site-logo">다시 부르기 : 아날로그 김광석</h1>
+            </Link>
+        </header>
+    );
+};
 
 const AppContent: React.FC = () => {
     return (
@@ -19,43 +46,15 @@ const AppContent: React.FC = () => {
     );
 };
 
-const HeaderNav: React.FC = () => {
-    const location = useLocation();
-    
-    return (
-        <nav className="site-nav">
-            <Link to="/" className={`nav-link ${location.pathname === "/" ? "active" : ""}`}>Home</Link>
-            <Link to="/archives" className={`nav-link ${location.pathname === "/archives" ? "active" : ""}`}>Archives</Link>
-        </nav>
-    );
-};
-
 function App() {
     return (
         <YTPlayerProvider>
             <BrowserRouter>
                 <div className="app-container">
-                    {/* Clean Header — matching design/home.png */}
-                    <header className="site-header">
-                        <h1 className="site-logo">아날로그 김광석</h1>
-                        <HeaderNav />
-                    <div className="header-icons">
-                        <button className="icon-btn" aria-label="검색">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <circle cx="11" cy="11" r="8"></circle>
-                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                            </svg>
-                        </button>
-                        <button className="icon-btn" aria-label="프로필">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="12" cy="7" r="4"></circle>
-                            </svg>
-                        </button>
-                    </div>
-                </header>
+                    {/* Dynamic Scroll Header */}
+                    <Header />
 
-                <AppContent />
+                    <AppContent />
 
                 {/* Minimal footer */}
                 <footer className="site-footer">

@@ -13,6 +13,7 @@ export const LPPlayer: React.FC = () => {
         duration,
         play,
         pause,
+        stop,
         togglePlay,
         seekTo,
         setSide,
@@ -21,6 +22,8 @@ export const LPPlayer: React.FC = () => {
     } = useYTPlayer();
     
     const navigate = useNavigate();
+
+    const [isLifted, setIsLifted] = useState<boolean>(false);
 
     useEffect(() => {
         if (!activeAlbum || !currentTrack) {
@@ -31,26 +34,96 @@ export const LPPlayer: React.FC = () => {
     const tonearmRef = useRef<HTMLDivElement>(null);
     const pivotRef = useRef<HTMLDivElement>(null);
     const platterRef = useRef<HTMLDivElement>(null);
+    const needleRef = useRef<HTMLDivElement>(null);
 
-    // Rotation angles for the tonearm needle:
-    // -5deg: resting position (off record)
-    //  14deg: outer edge of record (0% of track — start)
-    //  44deg: inner edge of record (100% of track — end)
-    const ANGLE_REST = -5;
-    const ANGLE_OUTER = 14;
-    const ANGLE_INNER = 44;
+    const [angles, setAngles] = useState({ rest: 16, outer: 20, inner: 44 });
 
-    // Calculate current tonearm angle from playback progress
-    const progress = duration > 0 ? currentTime / duration : 0;
+    useEffect(() => {
+        const measure = () => {
+            if (!platterRef.current || !tonearmRef.current || !pivotRef.current || !needleRef.current) return;
+            
+            const tonearmEl = tonearmRef.current;
+            const prevTransform = tonearmEl.style.transform;
+            const prevTransition = tonearmEl.style.transition;
+            
+            tonearmEl.style.transition = 'none';
+            tonearmEl.style.transform = 'rotate(0deg)';
+            void tonearmEl.offsetHeight; // force reflow
+
+            const platterRect = platterRef.current.getBoundingClientRect();
+            const pivotRect = pivotRef.current.getBoundingClientRect();
+            const needleRect = needleRef.current.getBoundingClientRect();
+
+            tonearmEl.style.transform = prevTransform;
+            requestAnimationFrame(() => {
+                if (tonearmRef.current) tonearmRef.current.style.transition = prevTransition;
+            });
+
+            const Cx = platterRect.left + platterRect.width / 2;
+            const Cy = platterRect.top + platterRect.height / 2;
+            const Px = pivotRect.left + pivotRect.width / 2;
+            const Py = pivotRect.top + pivotRect.height / 2;
+            const Nx = needleRect.left + needleRect.width / 2;
+            
+            // The needle tip is drawn using a pseudo-element (::after) which extends below the cartridge.
+            // getBoundingClientRect() doesn't include pseudo-elements, so we extract its offset to get the true tip.
+            const afterStyle = window.getComputedStyle(needleRef.current, '::after');
+            const bottomOffset = Math.abs(parseFloat(afterStyle.bottom)) || 0;
+            const Ny = needleRect.bottom + bottomOffset;
+
+            const L = Math.sqrt(Math.pow(Nx - Px, 2) + Math.pow(Ny - Py, 2));
+            const D = Math.sqrt(Math.pow(Cx - Px, 2) + Math.pow(Cy - Py, 2));
+
+            const dx = Cx - Px;
+            const dy = Cy - Py;
+            const phi = Math.atan2(dy, dx) * (180 / Math.PI) - 90;
+
+            const getTheta = (R: number) => {
+                const cosAlpha = (L * L + D * D - R * R) / (2 * L * D);
+                const alpha = Math.acos(Math.max(-1, Math.min(1, cosAlpha))) * (180 / Math.PI);
+                return phi - alpha;
+            };
+
+            const R_outer = (platterRect.width / 2) * 0.90;
+            const R_inner = (platterRect.width / 2) * 0.28;
+
+            const outer = getTheta(R_outer);
+            const inner = getTheta(R_inner);
+            setAngles({ rest: outer - 4, outer, inner });
+        };
+
+        // Small delay to ensure CSS has fully loaded and laid out elements, especially when resizing
+        const timer = setTimeout(measure, 50);
+        window.addEventListener('resize', measure);
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener('resize', measure);
+        };
+    }, []);
+
+    const ANGLE_REST = angles.rest || 16;
+    const ANGLE_OUTER = angles.outer || 20;
+    const ANGLE_INNER = angles.inner || 44;
+
+    const tracksList = currentSide === "A" ? activeAlbum?.tracksSideA : activeAlbum?.tracksSideB;
+    const sideStartTime = tracksList?.[0]?.startTime || 0;
+    const lastTrack = tracksList?.[tracksList.length - 1];
+    const sideEndTime = lastTrack ? lastTrack.startTime + lastTrack.duration : (duration || 1);
+    const sideDuration = sideEndTime - sideStartTime;
+
+    // Calculate current tonearm angle from playback progress relative to the current side
+    const clampedTime = Math.max(sideStartTime, Math.min(currentTime, sideEndTime));
+    const progress = sideDuration > 0 ? (clampedTime - sideStartTime) / sideDuration : 0;
     const playbackAngle = ANGLE_OUTER + (ANGLE_INNER - ANGLE_OUTER) * progress;
 
     // While playing or paused, show playback-derived angle; while idle, resting
-    const finalAngle = (playerStatus === "UNSTARTED" || playerStatus === "ENDED")
+    const finalAngle = (isLifted || playerStatus === "UNSTARTED" || playerStatus === "ENDED" || playerStatus === "CUED")
             ? ANGLE_REST
             : playbackAngle;
 
     // Click on vinyl to seek
     const handleVinylClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        setIsLifted(false);
         if (!duration) return;
 
         const rect = e.currentTarget.getBoundingClientRect();
@@ -61,15 +134,15 @@ export const LPPlayer: React.FC = () => {
         const dy = e.clientY - centerY;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
-        const maxRadius = rect.width / 2; // Outer edge
-        const minRadius = 45; // Center label edge (~45px radius)
+        const maxRadius = (rect.width / 2) * 0.90; // Outer edge of the grooved area
+        const minRadius = (rect.width / 2) * 0.28; // Center label edge (approx 28% of radius)
 
         // Clamp distance to playable groove area
         const clampedDistance = Math.max(minRadius, Math.min(distance, maxRadius));
 
         // Map distance to progress (outer = 0%, inner = 100%)
         const clickProgress = 1 - (clampedDistance - minRadius) / (maxRadius - minRadius);
-        const targetSeconds = clickProgress * duration;
+        const targetSeconds = sideStartTime + clickProgress * sideDuration;
 
         seekTo(targetSeconds);
         
@@ -82,7 +155,6 @@ export const LPPlayer: React.FC = () => {
 
     const isSpinning = playerStatus === "PLAYING";
     const isBuffering = playerStatus === "BUFFERING";
-    const tracksList = currentSide === "A" ? activeAlbum.tracksSideA : activeAlbum.tracksSideB;
 
     return (
         <div className="player-page lp-page-container">
@@ -102,7 +174,7 @@ export const LPPlayer: React.FC = () => {
 
             <div className="player-main-layout">
                 {/* Left Side: Youtube Player (Album Sleeve Cover Mock) */}
-                <div className="sleeve-column PC-only">
+                <div className="sleeve-column">
                     <div className="lp-sleeve-frame">
                         <div className="sleeve-card" style={{ backgroundColor: activeAlbum.coverColor }}>
                             <div className="sleeve-ring-overlay"></div>
@@ -127,10 +199,7 @@ export const LPPlayer: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Mobile Hidden YouTube Player (Audio Only since Turntable is main) */}
-                <div className="mobile-only" style={{ position: 'absolute', top: '-9999px', width: '10px', height: '10px', overflow: 'hidden' }}>
-                    <div id="yt-hidden-player-mobile-placeholder"></div>
-                </div>
+
 
                 {/* Right/Center: Large Draggable Turntable */}
                 <div className="player-column">
@@ -173,26 +242,22 @@ export const LPPlayer: React.FC = () => {
                                 <div className="tonearm-rod"></div>
 
                                 <div className="tonearm-headshell">
-                                    <div className="stylus-cartridge"></div>
+                                    <div className="stylus-cartridge" ref={needleRef}></div>
                                 </div>
                             </div>
                         </div>
 
                         {/* Turntable Controls */}
                         <div className="turntable-controls-bar">
-                            {/* Speed Toggle (33 / 45 RPM) */}
-                            <div className="side-selector-knob">
-                                <span className="knob-label">SPEED</span>
-                                <div className="radio-toggle-group">
-                                    <button className="toggle-option active">33</button>
-                                    <button className="toggle-option">45</button>
-                                </div>
-                            </div>
+
 
                             {/* Play / Pause Toggle Lever — labeled START like the design */}
                             <button
                                 className={`lever-switch ${isSpinning ? "active" : ""}`}
-                                onClick={togglePlay}
+                                onClick={() => {
+                                    setIsLifted(false);
+                                    togglePlay();
+                                }}
                             >
                                 <div className="lever-handle"></div>
                                 <span className="lever-label">{isSpinning ? "STOP" : "START"}</span>
@@ -224,6 +289,7 @@ export const LPPlayer: React.FC = () => {
                                     className="toggle-option active"
                                     style={{ padding: "6px 14px" }}
                                     onClick={() => {
+                                        setIsLifted(true);
                                         pause();
                                     }}
                                 >
@@ -233,13 +299,6 @@ export const LPPlayer: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Draggable needle manual helper block */}
-                    <div className="stylus-instruction-box glass-effect">
-                        <p>
-                            💡 <strong>아날로그 조작법:</strong> 회전 중인 LP 판의 원하는 위치를 <strong>클릭</strong>하여 해당 음악 시간대로 자동 점프합니다. 중심에 가까울수록 곡의 후반부입니다. <br/>
-                            <span style={{ fontSize: '11px', opacity: 0.8 }}>(* 톤암은 실제 기기처럼 우측의 궤적을 따라서만 움직이며, 클릭하신 위치의 '반지름'에 맞춰 바늘이 이동합니다.)</span>
-                        </p>
-                    </div>
                 </div>
             </div>
         </div>
