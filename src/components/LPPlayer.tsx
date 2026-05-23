@@ -28,6 +28,14 @@ export const LPPlayer: React.FC = () => {
         }
     }, [activeAlbum, currentTrack, navigate]);
 
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            play();
+        }, 600);
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     const tonearmRef = useRef<HTMLDivElement>(null);
     const pivotRef = useRef<HTMLDivElement>(null);
     const platterRef = useRef<HTMLDivElement>(null);

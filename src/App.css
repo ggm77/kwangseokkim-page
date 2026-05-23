@@ -1706,11 +1706,35 @@
 
 @media (max-width: 520px) {
     .album-grid {
-        grid-template-columns: 1fr;
-        gap: 32px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px 16px;
+    }
+
+    .album-grid-title {
+        font-size: 14px;
+    }
+
+    .album-grid-year {
+        font-size: 11px;
+    }
+
+    .hero-subtitle {
+        margin-bottom: 12px;
     }
 
     .hero-title {
         font-size: 28px;
+        margin-bottom: 16px;
+        padding: 0 16px;
+    }
+
+    .hero-desc {
+        line-height: 1.7;
+        margin-top: 0;
+        padding: 0 32px;
+    }
+
+    .album-grid-info {
+        padding: 8px 8px 4px;
     }
 }
