@@ -284,7 +284,7 @@ export const CassettePlayer: React.FC = () => {
 
             <div className="player-main-layout">
                 {/* Left: Disguised Youtube Iframe (The "Album Sleeve") */}
-                <AlbumSleeve activeAlbum={activeAlbum} />
+                <AlbumSleeve activeAlbum={activeAlbum} currentSide={currentSide} />
 
                 {/* Right/Center: Large Interactive Cassette Player */}
                 <div className="player-column">

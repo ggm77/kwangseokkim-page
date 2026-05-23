@@ -21,6 +21,7 @@ export const LPPlayer: React.FC = () => {
     const navigate = useNavigate();
 
     const [viewSide, setViewSide] = useState<"A" | "B">(currentSide);
+    const [isSideChanging, setIsSideChanging] = useState<boolean>(false);
     const [isLifted, setIsLifted] = useState<boolean>(false);
     const [isLiftStopping, setIsLiftStopping] = useState<boolean>(false);
     const [playIntent, setPlayIntent] = useState<boolean>(false);
@@ -54,8 +55,47 @@ export const LPPlayer: React.FC = () => {
     }, []);
 
     const handleSideChange = (targetSide: "A" | "B") => {
-        // Only flip the UI view — do not interrupt playback
-        setViewSide(targetSide);
+        if (currentSide === targetSide || isSideChanging) return;
+
+        setIsSideChanging(true);
+
+        // 1. Pause playback and lift tonearm
+        setIsLifted(true);
+        if (playDelayTimerRef.current) clearTimeout(playDelayTimerRef.current);
+        setPlayIntent(false);
+        pauseRef.current();
+
+        setIsLiftStopping(true);
+        if (liftStopTimerRef.current) clearTimeout(liftStopTimerRef.current);
+        liftStopTimerRef.current = setTimeout(() => {
+            setIsLiftStopping(false);
+        }, 300);
+
+        // 2. Wait for tonearm to return, then flip the side
+        if (sideChangeTimerRef.current) clearTimeout(sideChangeTimerRef.current);
+        sideChangeTimerRef.current = setTimeout(() => {
+            // Force platter to stop completely right before flip
+            cancelAnimationFrame(slowDownReqRef.current);
+            if (spinAnimRef.current) {
+                spinAnimRef.current.pause();
+                spinAnimRef.current.playbackRate = 0;
+            }
+
+            setSide(targetSide);
+            setViewSide(targetSide);
+            
+            // Wait briefly so the user sees the flipped and stopped record
+            setTimeout(() => {
+                setIsSideChanging(false);
+                
+                // 3. Auto-play after flipping
+                setIsLifted(false);
+                setPlayIntent(true);
+                playDelayTimerRef.current = setTimeout(() => {
+                    playRef.current();
+                }, 1000);
+            }, 800);
+        }, 1200);
     };
 
     useEffect(() => {
@@ -65,11 +105,7 @@ export const LPPlayer: React.FC = () => {
     }, [activeAlbum, currentTrack, navigate]);
 
     useEffect(() => {
-        if (
-            playerStatus === "PLAYING" ||
-            playerStatus === "UNSTARTED" ||
-            playerStatus === "CUED"
-        ) {
+        if (playerStatus === "PLAYING") {
             setPlayIntent(false);
         }
     }, [playerStatus]);
@@ -231,12 +267,12 @@ export const LPPlayer: React.FC = () => {
         sideDuration > 0 ? (clampedTime - sideStartTime) / sideDuration : 0;
     const playbackAngle = ANGLE_OUTER + (ANGLE_INNER - ANGLE_OUTER) * progress;
 
-    // While playing or paused, show playback-derived angle; while idle, resting
+    const isBuffering = playerStatus === "BUFFERING";
+    const isLeverActive = playIntent || playerStatus === "PLAYING" || isBuffering;
+
+    // While lever is active and not lifted, show playback-derived angle; while idle, resting
     const finalAngle =
-        isLifted ||
-        playerStatus === "UNSTARTED" ||
-        playerStatus === "ENDED" ||
-        playerStatus === "CUED"
+        isLifted || !isLeverActive
             ? ANGLE_REST
             : playbackAngle;
 
@@ -285,8 +321,6 @@ export const LPPlayer: React.FC = () => {
         }
     };
 
-    const isBuffering = playerStatus === "BUFFERING";
-    const isLeverActive = playIntent || playerStatus === "PLAYING" || isBuffering;
     const isSpinning = isLeverActive || isLiftStopping;
 
     useEffect(() => {
@@ -372,7 +406,7 @@ export const LPPlayer: React.FC = () => {
                 <AlbumSleeve
                     activeAlbum={activeAlbum}
                     currentSide={viewSide}
-                    onSleeveClick={() => handleSideChange(viewSide === 'A' ? 'B' : 'A')}
+                    onSleeveClick={() => setViewSide(viewSide === 'A' ? 'B' : 'A')}
                 />
 
                 {/* Right/Center: Large Draggable Turntable */}
@@ -508,14 +542,16 @@ export const LPPlayer: React.FC = () => {
                                     <span className="knob-label">SIDE</span>
                                     <div className="radio-toggle-group">
                                         <button
-                                            className={`toggle-option ${viewSide === "A" ? "active" : ""}`}
+                                            className={`toggle-option ${currentSide === "A" ? "active" : ""}`}
                                             onClick={() => handleSideChange("A")}
+                                            disabled={isSideChanging}
                                         >
                                             A
                                         </button>
                                         <button
-                                            className={`toggle-option ${viewSide === "B" ? "active" : ""}`}
+                                            className={`toggle-option ${currentSide === "B" ? "active" : ""}`}
                                             onClick={() => handleSideChange("B")}
+                                            disabled={isSideChanging}
                                         >
                                             B
                                         </button>
