@@ -1,24 +1,18 @@
 import React from "react";
-import { flushSync } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { ALBUMS } from "../data/albums";
 import type { Album } from "../data/albums";
 import { useYTPlayer } from "./YTPlayerStore";
 
 export const AlbumCarousel: React.FC = () => {
-    const { selectAlbum, selectMedia, initPlayerNow } = useYTPlayer();
+    const { selectAlbum, selectMedia } = useYTPlayer();
     const navigate = useNavigate();
 
     const handleSelectMedia = (album: Album, media: "lp" | "cassette", e: React.MouseEvent) => {
         e.stopPropagation();
-        flushSync(() => {
-            selectAlbum(album);
-            selectMedia(media);
-            navigate(`/${media}`);
-        });
-        // Synchronously initialize the player inside the user gesture handler
-        // to bypass strict browser autoplay policies.
-        initPlayerNow();
+        selectAlbum(album);
+        selectMedia(media);
+        navigate(`/${media}`);
     };
 
     return (

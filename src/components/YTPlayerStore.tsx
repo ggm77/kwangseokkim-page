@@ -32,7 +32,6 @@ interface YTPlayerContextType {
   stop: () => void;
   togglePlay: () => void;
   seekTo: (seconds: number) => void;
-  initPlayerNow: () => void;
   setSide: (side: "A" | "B") => void;
   setTrackIndex: (index: number) => void;
   toggleMute: () => void;
@@ -91,12 +90,17 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
-  // 2. Initialize player when activeTrack changes
+  // 2. Initialize player when activeTrack or activeMedia changes
   useEffect(() => {
-    if (!currentTrack) {
+    let isCancelled = false;
+    let timeoutId: number | null = null;
+
+    if (!currentTrack || !activeMedia) {
       if (playerRef.current) {
         try {
-          playerRef.current.destroy();
+          if (typeof playerRef.current.destroy === "function") {
+            playerRef.current.destroy();
+          }
         } catch (e) {
           console.error(e);
         }
@@ -109,12 +113,14 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
 
     const initPlayer = () => {
-      let containerId = iframeContainerId;
-      let el = document.getElementById(containerId);
+      if (isCancelled) return;
+
+      const containerId = iframeContainerId;
+      const el = document.getElementById(containerId);
 
       // Check if div exists. If not, wait.
       if (!el) {
-        setTimeout(initPlayer, 100);
+        timeoutId = window.setTimeout(initPlayer, 100);
         return;
       }
 
@@ -124,7 +130,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           // It's still a DIV. Either it's initializing, or it's a dead reference.
           // If we already marked it as initializing, wait.
           if (el.hasAttribute('data-yt-init')) {
-            setTimeout(initPlayer, 100);
+            timeoutId = window.setTimeout(initPlayer, 100);
             return;
           }
           // Dead reference, destroy it
@@ -149,6 +155,12 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
       }
 
+      // If element is already an IFRAME (from a previous player), wait for cleanup
+      if (el.tagName === 'IFRAME') {
+        timeoutId = window.setTimeout(initPlayer, 100);
+        return;
+      }
+
       el.setAttribute('data-yt-init', 'true');
 
       // Create new player
@@ -170,6 +182,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         },
         events: {
           onReady: (event: any) => {
+            if (isCancelled) return;
             event.target.setVolume(volume);
             if (isMuted) {
               event.target.mute();
@@ -180,6 +193,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             event.target.playVideo();
           },
           onStateChange: (event: any) => {
+            if (isCancelled) return;
             const state = event.data;
             let statusStr: PlayerStatus = "UNSTARTED";
             
@@ -208,79 +222,19 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       initPlayer();
     } else {
       window.onYouTubeIframeAPIReady = () => {
-        initPlayer();
+        if (!isCancelled) {
+          initPlayer();
+        }
       };
     }
-  }, [currentTrack]);
 
-  const initPlayerNow = () => {
-    if (!currentTrack) return;
-    const containerId = iframeContainerId;
-    const el = document.getElementById(containerId);
-    if (!el) return;
-
-    if (playerRef.current) {
-      if (typeof playerRef.current.getPlayerState === "function") {
-        if (typeof playerRef.current.loadVideoById === "function") {
-          playerRef.current.loadVideoById({
-            videoId: currentTrack.youtubeId,
-            startSeconds: currentTrack.startTime
-          });
-          setPlayerStatus("BUFFERING");
-        }
-        return;
+    return () => {
+      isCancelled = true;
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
       }
-    }
-
-    if (el.getAttribute('data-yt-init') === 'true') return;
-    el.setAttribute('data-yt-init', 'true');
-
-    playerRef.current = new window.YT.Player(containerId, {
-      height: "100%",
-      width: "100%",
-      videoId: currentTrack.youtubeId,
-      playerVars: {
-        autoplay: 1,
-        controls: 0,
-        start: currentTrack.startTime,
-        disablekb: 1,
-        fs: 0,
-        rel: 0,
-        showinfo: 0,
-        modestbranding: 1,
-        iv_load_policy: 3,
-        origin: window.location.origin
-      },
-      events: {
-        onReady: (event: any) => {
-          event.target.setVolume(volume);
-          if (isMuted) {
-            event.target.mute();
-          } else {
-            event.target.unMute();
-          }
-          setDuration(event.target.getDuration() || currentTrack.duration);
-          event.target.playVideo();
-        },
-        onStateChange: (event: any) => {
-          const state = event.data;
-          let statusStr: PlayerStatus = "UNSTARTED";
-          if (state === window.YT.PlayerState.PLAYING) statusStr = "PLAYING";
-          else if (state === window.YT.PlayerState.PAUSED) statusStr = "PAUSED";
-          else if (state === window.YT.PlayerState.BUFFERING) statusStr = "BUFFERING";
-          else if (state === window.YT.PlayerState.ENDED) statusStr = "ENDED";
-          else if (state === window.YT.PlayerState.CUED) statusStr = "CUED";
-          setPlayerStatus(statusStr);
-          if (state === window.YT.PlayerState.PLAYING) {
-            setDuration(event.target.getDuration() || currentTrack.duration);
-          }
-          if (state === window.YT.PlayerState.ENDED) {
-            handleTrackEnd();
-          }
-        }
-      }
-    });
-  };
+    };
+  }, [currentTrack, activeMedia]);
 
   // 3. Time polling interval
   useEffect(() => {
@@ -465,7 +419,6 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         toggleMute,
         setVolume,
         resetPlayer,
-        initPlayerNow,
         iframeContainerId
       }}
     >
