@@ -1,17 +1,23 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ALBUMS } from "../data/albums";
 import type { Album } from "../data/albums";
 import { useYTPlayer } from "./YTPlayerStore";
 
 export const AlbumCarousel: React.FC = () => {
-    const { selectAlbum, selectMedia } = useYTPlayer();
+    const { startMedia, resetPlayer } = useYTPlayer();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        // Stop playing when the user returns to the main page
+        // (e.g., via browser's back button)
+        resetPlayer();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleSelectMedia = (album: Album, media: "lp" | "cassette", e: React.MouseEvent) => {
         e.stopPropagation();
-        selectAlbum(album);
-        selectMedia(media);
+        startMedia(album, media);
         navigate(`/${media}`);
     };
 

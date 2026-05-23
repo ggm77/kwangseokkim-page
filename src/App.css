@@ -12,6 +12,9 @@
     min-height: 100vh;
     position: relative;
     background-color: var(--bg-page);
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 /* ------------------------------------------------
@@ -570,6 +573,115 @@
     border: 8px solid #fff;
 }
 
+/* Modern Retro Sleeve Styles - 3D Flip Card */
+.modern-sleeve-container {
+    perspective: 1200px;
+    width: 100%;
+    height: 480px;
+    transition: transform 0.3s ease;
+}
+
+.modern-sleeve-container:hover {
+    transform: translateY(-5px);
+}
+
+.modern-sleeve-flipper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.8s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transform-style: preserve-3d;
+    -webkit-transform-style: preserve-3d;
+}
+
+.modern-sleeve-container.flipped .modern-sleeve-flipper {
+    transform: rotateY(180deg);
+    -webkit-transform: rotateY(180deg);
+}
+
+.modern-sleeve-face {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    -webkit-transform: translateZ(0);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 
+        0 20px 50px rgba(0, 0, 0, 0.3),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: #111;
+}
+
+.modern-sleeve-front {
+    z-index: 2;
+}
+
+.modern-sleeve-back {
+    transform: rotateY(180deg);
+    -webkit-transform: rotateY(180deg);
+    z-index: 1;
+}
+
+.modern-sleeve-container:hover .modern-sleeve-face {
+    box-shadow: 
+        0 30px 60px rgba(0, 0, 0, 0.4),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.modern-sleeve-glass {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(125deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%, rgba(255,255,255,0.05) 100%);
+    pointer-events: none;
+    z-index: 10;
+    mix-blend-mode: overlay;
+}
+
+.noise-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1;
+}
+
+.modern-j-card {
+    position: relative;
+    z-index: 2;
+    backdrop-filter: blur(10px);
+    border-radius: 8px;
+    padding-right: 10px;
+}
+
+.modern-vintage-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 8px;
+}
+
+.stereo-badge {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.15em;
+    font-weight: 600;
+}
+
+.hi-res-badge {
+    color: var(--accent-gold);
+    border: 1px solid var(--accent-gold);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+}
+
 .sleeve-card {
     width: 100%;
     height: 100%;
@@ -1107,57 +1219,64 @@
    LP TURNTABLE — BRIGHT
    ------------------------------------------------ */
 .turntable-deck-outer {
-    background: linear-gradient(135deg, #e8e1d5 0%, #ddd5c6 50%, #e0d8ca 100%);
-    border: 3px solid #c4b9a5;
-    box-shadow: 0 12px 40px rgba(80, 50, 20, 0.10);
+    background-color: #b87a45;
+    border: none;
     border-radius: 16px;
+    box-shadow: 
+        inset 2px 2px 4px rgba(255, 255, 255, 0.4),
+        inset -2px -2px 5px rgba(0, 0, 0, 0.3), 
+        1px 1px 0 #8b4f23,
+        2px 2px 0 #7a431c,
+        3px 3px 0 #683815,
+        6px 10px 20px rgba(0, 0, 0, 0.25);
+    background-image: 
+        repeating-linear-gradient(
+            to right,
+            transparent,
+            transparent 15px,
+            rgba(0, 0, 0, 0.04) 15px,
+            rgba(0, 0, 0, 0.04) 16px,
+            transparent 16px,
+            transparent 30px,
+            rgba(255, 255, 255, 0.02) 30px,
+            rgba(255, 255, 255, 0.02) 32px
+        ),
+        repeating-linear-gradient(
+            to right,
+            rgba(0, 0, 0, 0.02) 0px,
+            rgba(0, 0, 0, 0.02) 1px,
+            transparent 1px,
+            transparent 4px
+        ),
+        linear-gradient(135deg, #c68f5c 0%, #a66530 50%, #80481d 100%);
     padding: 36px;
     position: relative;
-    overflow: hidden;
-    /* Subtle diagonal texture like design */
-    background-image: repeating-linear-gradient(
-        45deg,
-        transparent,
-        transparent 2px,
-        rgba(0, 0, 0, 0.015) 2px,
-        rgba(0, 0, 0, 0.015) 4px
-    );
+    aspect-ratio: 1 / 1;
+    max-width: 520px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    zoom: 0.8;
 }
-
-/* Metallic corner screws */
-.deck-screws {
-    position: absolute;
-    width: 10px;
-    height: 10px;
-    background: #bbb;
-    border-radius: 50%;
-    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.5), 0 1px 2px rgba(0, 0, 0, 0.15);
-}
-.deck-screws::after {
-    content: '';
-    position: absolute;
-    width: 8px;
-    height: 2px;
-    background: #999;
-    top: 4px; left: 1px;
-}
-.top-left { top: 12px; left: 12px; }
-.top-right { top: 12px; right: 12px; }
-.bottom-left { bottom: 12px; left: 12px; }
-.bottom-right { bottom: 12px; right: 12px; }
 
 .platter-compartment {
-    background: #c8bfaf;
+    background: #2a2a2a;
     border-radius: 50%;
     width: 400px;
     height: 400px;
-    margin: 0 auto 24px;
-    border: 10px solid #d5ccbc;
-    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.06);
+    margin: 0;
+    border: 10px solid #1a1a1a;
+    box-shadow: 
+        inset 0 6px 12px rgba(0, 0, 0, 0.5), 
+        inset 0 -1px 4px rgba(255, 255, 255, 0.05), 
+        0 4px 8px rgba(0, 0, 0, 0.15);
     display: flex;
     justify-content: center;
     align-items: center;
     position: relative;
+    transform: scale(0.92);
+    perspective: 1500px;
 }
 
 .turntable-platter {
@@ -1182,15 +1301,33 @@
     width: 95%;
     height: 95%;
     border-radius: 50%;
-    background: radial-gradient(circle, #333 10%, #111 30%, #050505 60%);
     position: relative;
+    transition: transform 0.8s cubic-bezier(0.4, 0.0, 0.2, 1);
+    transform-style: preserve-3d;
+}
+
+.vinyl-record.flip-side-b {
+    transform: rotateY(180deg);
+}
+
+.vinyl-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    backface-visibility: hidden;
+    background: radial-gradient(circle, #333 10%, #111 30%, #050505 60%);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-.vinyl-record::before {
+.vinyl-face.vinyl-back {
+    transform: rotateY(180deg);
+}
+
+.vinyl-face::before {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
@@ -1293,7 +1430,7 @@
     background: radial-gradient(circle, #ddd 30%, #bbb 70%);
     border: 2px solid #ccc;
     border-radius: 50%;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -1316,7 +1453,7 @@
     height: 213px;
     background: linear-gradient(90deg, #ccc 0%, #f5f5f5 50%, #bbb 100%);
     border-radius: 3px;
-    box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.12);
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .tonearm-headshell {
@@ -1332,10 +1469,10 @@
     width: 18px;
     height: 35px;
     margin: 0 auto;
-    background: #888;
-    border: 1px solid #666;
+    background: #555555;
+    border: 1px solid #333;
     border-radius: 2px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
     position: relative;
 }
 
@@ -1349,7 +1486,7 @@
     height: 0;
     border-left: 3px solid transparent;
     border-right: 3px solid transparent;
-    border-top: 8px solid #e0e0e0;
+    border-top: 8px solid #aaaaaa;
 }
 
 .finger-lift {
@@ -1366,18 +1503,24 @@
 .tonearm-headshell.grabbing { cursor: grabbing; }
 
 .tonearm-headshell:hover .stylus-cartridge {
-    box-shadow: 0 0 8px rgba(139, 107, 62, 0.6);
-    border-color: var(--accent-gold);
+    box-shadow: 0 0 12px rgba(69, 189, 148, 0.6);
 }
 
 /* Turntable Controls */
 .turntable-controls-bar {
+    position: absolute;
+    bottom: 36px;
+    left: 36px;
+    right: 36px;
     display: flex;
     justify-content: space-between;
+    align-items: flex-end;
+}
+
+.turntable-right-controls {
+    display: flex;
     align-items: center;
-    border-top: 1px solid rgba(160, 128, 96, 0.15);
-    padding-top: 20px;
-    margin-top: 16px;
+    gap: 32px;
 }
 
 .side-selector-knob {
@@ -1389,8 +1532,12 @@
 
 .knob-label {
     font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--text-muted);
+    font-size: 11px;
+    color: #ffffff;
+    opacity: 0.9;
+    letter-spacing: 1px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    font-weight: bold;
 }
 
 .radio-toggle-group {
@@ -1419,47 +1566,73 @@
 }
 
 .lever-switch {
-    background: #fff;
-    border: 2px solid var(--border-brass);
-    width: 68px;
-    height: 68px;
-    border-radius: 50%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
+    background: transparent;
+    border: none;
+    width: 60px;
+    height: 60px;
     position: relative;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    transition: all 0.2s;
+    cursor: pointer;
+    border-radius: 50%;
+    /* Static drop shadow that stays still while the knob inside rotates */
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.6);
+    display: block;
+    margin: 4px; /* to compensate for changing from 68px to 60px */
 }
 
 .lever-switch:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.6);
 }
 
+/* 90s clunky rotary knob */
 .lever-handle {
-    width: 12px;
-    height: 22px;
-    background: #aaa;
-    border-radius: 3px;
-    border: 1px solid #888;
-    transform: rotate(-30deg);
-    transition: transform 0.3s;
-    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.15);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, #555, #222, #666, #222, #555);
+    border: 2px solid #111;
+    /* Only symmetric inner lighting, no outer drop shadow here */
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.2);
+    /* Snappy mechanical click transition */
+    transition: transform 0.15s cubic-bezier(0, 0, 0, 1);
+    transform: rotate(-45deg);
 }
 
 .lever-switch.active .lever-handle {
-    transform: rotate(30deg);
-    background: var(--accent-gold);
+    transform: rotate(45deg);
 }
 
+/* Painted white line indicator on the knob */
+.lever-handle::after {
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 27px;
+    width: 4px;
+    height: 14px;
+    background: #dddddd;
+    border-radius: 2px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Vintage printed label on the wood deck */
 .lever-label {
+    position: absolute;
+    top: clamp(-22px, -3vw, -13px);
+    bottom: auto;
+    left: 50%;
+    transform: translateX(-50%);
     font-family: var(--font-mono);
-    font-size: 7px;
-    margin-top: 5px;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
+    font-size: clamp(7.5px, 1.5vw, 13px);
+    font-weight: bold;
+    letter-spacing: 0px;
+    color: #e0d5c1; /* Faded print color */
+    margin: 0;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    transition: none;
+    white-space: nowrap;
 }
 
 .sliders-section {
@@ -1613,11 +1786,12 @@
 
     .player-main-layout {
         grid-template-columns: 1fr;
-        gap: 20px;
+        gap: 30px;
     }
 
     .sleeve-column {
         order: 2;
+        margin-top: 20px;
     }
 
     .player-column {
@@ -1627,6 +1801,9 @@
     .cassette-deck-outer,
     .turntable-deck-outer {
         padding: 16px;
+    }
+    .turntable-deck-outer {
+        zoom: 1;
     }
 
     .cassette-tape-wrap {
@@ -1641,6 +1818,7 @@
     .platter-compartment {
         width: 300px;
         height: 300px;
+        transform: scale(0.85);
     }
 
     .vinyl-label-center {
@@ -1689,9 +1867,14 @@
     }
 
     .turntable-controls-bar {
-        flex-wrap: wrap;
-        gap: 14px;
-        justify-content: center;
+        bottom: 16px;
+        left: 16px;
+        right: 16px;
+        gap: 16px;
+    }
+
+    .turntable-right-controls {
+        gap: 16px;
     }
 
     .sliders-section {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useYTPlayer } from "./YTPlayerStore";
+import { AlbumSleeve } from "./AlbumSleeve";
 
 export const CassettePlayer: React.FC = () => {
     const {
@@ -24,17 +25,6 @@ export const CassettePlayer: React.FC = () => {
             navigate("/");
         }
     }, [activeAlbum, currentTrack, navigate]);
-
-    useEffect(() => {
-        // Delay the auto-play slightly so the user can clearly see
-        // the button in its unpressed state before it animates down.
-        const timer = setTimeout(() => {
-            setPlayIntent(true);
-            play();
-        }, 600); // 0.6 seconds delay
-        return () => clearTimeout(timer);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
 
     const [isFlipped, setIsFlipped] = useState<boolean>(false);
     const [isEjecting, setIsEjecting] = useState<boolean>(false);
@@ -145,6 +135,43 @@ export const CassettePlayer: React.FC = () => {
         play();
     }, [play]);
 
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (document.activeElement?.tagName === "BUTTON" && e.code === "Space") return;
+
+            if (e.code === "Space" && !e.repeat) {
+                e.preventDefault();
+                if (playerStatus === "PLAYING" || playerStatus === "BUFFERING") {
+                    pause();
+                } else {
+                    setPlayIntent(true);
+                    play();
+                }
+            } else if (e.code === "ArrowRight" && !e.repeat) {
+                e.preventDefault();
+                startFF();
+            } else if (e.code === "ArrowLeft" && !e.repeat) {
+                e.preventDefault();
+                startREW();
+            }
+        };
+
+        const handleKeyUp = (e: KeyboardEvent) => {
+            if (e.code === "ArrowRight" || e.code === "ArrowLeft") {
+                e.preventDefault();
+                stopSearch();
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        window.addEventListener("keyup", handleKeyUp);
+
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+            window.removeEventListener("keyup", handleKeyUp);
+        };
+    }, [playerStatus, play, pause, startFF, startREW, stopSearch]);
+
     // Natural 180-degree flip animation
     const handleEject = () => {
         if (isEjecting) return;
@@ -177,7 +204,7 @@ export const CassettePlayer: React.FC = () => {
 
     // Rotation speed classes based on state
     let reelSpeedClass = "stopped";
-    if (playerStatus === "PLAYING") reelSpeedClass = "playing";
+    if (playIntent || playerStatus === "PLAYING" || playerStatus === "BUFFERING") reelSpeedClass = "playing";
     else if (isFF) reelSpeedClass = "fast-forward";
     else if (isREW) reelSpeedClass = "rewind";
 
@@ -257,35 +284,7 @@ export const CassettePlayer: React.FC = () => {
 
             <div className="player-main-layout">
                 {/* Left: Disguised Youtube Iframe (The "Album Sleeve") */}
-                <div className="sleeve-column">
-                    <div className="cassette-sleeve-frame">
-                        <div className="sleeve-card" style={{ backgroundColor: activeAlbum.coverColor }}>
-                            <div className="sleeve-j-card">
-                                <div className="sleeve-spine" style={{ borderLeftColor: activeAlbum.accentColor }}>
-                                    <div className="spine-text">{activeAlbum.title}</div>
-                                </div>
-                                <div className="sleeve-front">
-                                    <div className="vintage-header">ANALOG STEREO</div>
-                                    <div className="youtube-player-frame-outer">
-                                        <div id="yt-hidden-player" className="yt-iframe-embed"></div>
-                                    </div>
-                                    <div className="tracklist-sleeve">
-                                        <h4>SIDE {currentSide} TRACKS</h4>
-                                        <ol>
-                                            {tracksList.map((t, idx) => (
-                                                <li key={idx}>
-                                                    {t.title} ({Math.floor(t.duration / 60)}:{(t.duration % 60).toString().padStart(2, "0")})
-                                                </li>
-                                            ))}
-                                        </ol>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-
+                <AlbumSleeve activeAlbum={activeAlbum} />
 
                 {/* Right/Center: Large Interactive Cassette Player */}
                 <div className="player-column">
@@ -369,6 +368,7 @@ export const CassettePlayer: React.FC = () => {
                             <button
                                 className={`deck-btn btn-eject ${isEjecting ? "pressed" : ""}`}
                                 onClick={handleEject}
+                                disabled={isEjecting}
                             >
                                 <div className="btn-cap"><span className="icon">&#9167;</span><span className="label">FLIP</span></div>
                             </button>
