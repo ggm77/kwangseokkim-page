@@ -2,8 +2,6 @@ import React, { createContext, useContext, useState, useEffect, useRef } from "r
 import type { Album, Track } from "../data/albums";
 import { ALBUMS } from "../data/albums";
 
-
-// Extend Window interface for YouTube API
 declare global {
   interface Window {
     YT: any;
@@ -27,19 +25,18 @@ interface YTPlayerContextType {
   
   selectAlbum: (album: Album | null) => void;
   selectMedia: (media: "lp" | "cassette" | null) => void;
+  startMedia: (album: Album, media: "lp" | "cassette") => void;
   play: () => void;
   pause: () => void;
   stop: () => void;
   togglePlay: () => void;
   seekTo: (seconds: number) => void;
-  initPlayerNow: () => void;
   setSide: (side: "A" | "B") => void;
   setTrackIndex: (index: number) => void;
   toggleMute: () => void;
   setVolume: (vol: number) => void;
   resetPlayer: () => void;
   
-  // Ref to hold the iframe mount point ID
   iframeContainerId: string;
 }
 
@@ -74,14 +71,23 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const playerRef = useRef<any>(null);
   const timeUpdateInterval = useRef<number | null>(null);
-  const iframeContainerId = "yt-hidden-player";
+  const iframeContainerId = "yt-global-player";
   
-  const tracks = activeAlbum 
-    ? (currentSide === "A" ? activeAlbum.tracksSideA : activeAlbum.tracksSideB)
-    : [];
+  const tracks = activeAlbum ? (currentSide === "A" ? activeAlbum.tracksSideA : activeAlbum.tracksSideB) : [];
   const currentTrack = tracks[currentTrackIndex] || null;
 
-  // 1. Load YouTube IFrame Player API
+  // Refs for callbacks
+  const stateRef = useRef({ activeAlbum, currentSide, currentTrackIndex, tracks, currentTrack });
+  useEffect(() => {
+    stateRef.current = { activeAlbum, currentSide, currentTrackIndex, tracks, currentTrack };
+  }, [activeAlbum, currentSide, currentTrackIndex, tracks, currentTrack]);
+
+  const volMuteRef = useRef({ volume, isMuted });
+  useEffect(() => {
+    volMuteRef.current = { volume, isMuted };
+  }, [volume, isMuted]);
+
+  // Load API
   useEffect(() => {
     if (!window.YT) {
       const tag = document.createElement("script");
@@ -91,111 +97,60 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, []);
 
-  // 2. Initialize player when activeTrack changes
-  useEffect(() => {
-    if (!currentTrack) {
-      if (playerRef.current) {
-        try {
-          playerRef.current.destroy();
-        } catch (e) {
-          console.error(e);
-        }
-        playerRef.current = null;
-        setPlayerStatus("UNSTARTED");
-        setCurrentTime(0);
-        setDuration(0);
+  const handleTrackEnd = () => {
+    const { activeAlbum, currentSide, currentTrackIndex, tracks } = stateRef.current;
+    if (!activeAlbum) return;
+
+    const nextIndex = currentTrackIndex + 1;
+    if (nextIndex < tracks.length) {
+      setCurrentTrackIndex(nextIndex);
+    } else {
+      if (currentSide === "A") {
+        setTimeout(() => { setCurrentSide("B"); setCurrentTrackIndex(0); }, 1500);
+      } else {
+        setTimeout(() => { setCurrentSide("A"); setCurrentTrackIndex(0); }, 1500);
       }
-      return;
     }
+  };
 
+  // Init global player once
+  useEffect(() => {
+    let isCancelled = false;
     const initPlayer = () => {
-      let containerId = iframeContainerId;
-      let el = document.getElementById(containerId);
-
-      // Check if div exists. If not, wait.
+      if (isCancelled) return;
+      if (playerRef.current) return;
+      const el = document.getElementById(iframeContainerId);
       if (!el) {
-        setTimeout(initPlayer, 100);
+        window.setTimeout(initPlayer, 100);
         return;
       }
-
-      // If player already exists
-      if (playerRef.current) {
-        if (el.tagName !== "IFRAME") {
-          // It's still a DIV. Either it's initializing, or it's a dead reference.
-          // If we already marked it as initializing, wait.
-          if (el.hasAttribute('data-yt-init')) {
-            setTimeout(initPlayer, 100);
-            return;
-          }
-          // Dead reference, destroy it
-          try {
-            if (typeof playerRef.current.destroy === "function") {
-              playerRef.current.destroy();
-            }
-          } catch (e) {
-            console.error(e);
-          }
-          playerRef.current = null;
-        } else {
-          // It's an IFRAME, reuse it
-          if (typeof playerRef.current.loadVideoById === "function") {
-            playerRef.current.loadVideoById({
-              videoId: currentTrack.youtubeId,
-              startSeconds: currentTrack.startTime
-            });
-            setPlayerStatus("BUFFERING");
-          }
-          return;
-        }
-      }
-
-      el.setAttribute('data-yt-init', 'true');
-
-      // Create new player
-      playerRef.current = new window.YT.Player(containerId, {
-        height: "100%",
-        width: "100%",
-        videoId: currentTrack.youtubeId,
-        playerVars: {
-          autoplay: 1,
-          controls: 0, // Hide native controls
-          start: currentTrack.startTime,
-          disablekb: 1,
-          fs: 0,
-          rel: 0,
-          showinfo: 0,
-          modestbranding: 1,
-          iv_load_policy: 3,
-          origin: window.location.origin
-        },
+      playerRef.current = new window.YT.Player(iframeContainerId, {
+        height: "100%", width: "100%",
+        videoId: ALBUMS[0].tracksSideA[0].youtubeId,
+        playerVars: { autoplay: 0, controls: 0, disablekb: 1, fs: 0, rel: 0, showinfo: 0, modestbranding: 1, origin: window.location.origin },
         events: {
           onReady: (event: any) => {
+            if (isCancelled) return;
+            const { volume, isMuted } = volMuteRef.current;
             event.target.setVolume(volume);
-            if (isMuted) {
-              event.target.mute();
-            } else {
-              event.target.unMute();
-            }
-            setDuration(event.target.getDuration() || currentTrack.duration);
-            event.target.playVideo();
+            if (isMuted) event.target.mute(); else event.target.unMute();
+            
+            // Do not cue video here. Keep UNSTARTED to avoid Safari frozen state.
           },
           onStateChange: (event: any) => {
+            if (isCancelled) return;
             const state = event.data;
             let statusStr: PlayerStatus = "UNSTARTED";
-            
             if (state === window.YT.PlayerState.PLAYING) statusStr = "PLAYING";
             else if (state === window.YT.PlayerState.PAUSED) statusStr = "PAUSED";
             else if (state === window.YT.PlayerState.BUFFERING) statusStr = "BUFFERING";
             else if (state === window.YT.PlayerState.ENDED) statusStr = "ENDED";
             else if (state === window.YT.PlayerState.CUED) statusStr = "CUED";
-
+            
             setPlayerStatus(statusStr);
-
             if (state === window.YT.PlayerState.PLAYING) {
-              setDuration(event.target.getDuration() || currentTrack.duration);
+              setDuration(event.target.getDuration() || stateRef.current.currentTrack?.duration || 0);
             }
-
-            // Auto-reverse / Auto-advance logic
             if (state === window.YT.PlayerState.ENDED) {
               handleTrackEnd();
             }
@@ -204,271 +159,145 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       });
     };
 
-    if (window.YT && window.YT.Player) {
-      initPlayer();
-    } else {
-      window.onYouTubeIframeAPIReady = () => {
-        initPlayer();
-      };
+    if (window.YT && window.YT.Player) initPlayer();
+    else { window.onYouTubeIframeAPIReady = () => { if (!isCancelled) initPlayer(); }; }
+    
+    return () => { isCancelled = true; };
+  }, []);
+
+  // Sync track changes if done from next/prev/side change
+  useEffect(() => {
+    // Only react to currentTrack changes if player is ready
+    if (playerRef.current && typeof playerRef.current.loadVideoById === "function") {
+       if (currentTrack && activeMedia) {
+         // If it was playing or just ended (auto-advance), load and play
+         if (playerStatus === "PLAYING" || playerStatus === "ENDED" || playerStatus === "BUFFERING") {
+           playerRef.current.loadVideoById({
+             videoId: currentTrack.youtubeId,
+             startSeconds: currentTrack.startTime
+           });
+           setPlayerStatus("BUFFERING");
+         } else {
+           // Otherwise (initial load or flipped side while paused), avoid cueing to prevent Safari freeze.
+           // Just set to UNSTARTED so play() knows to load it when pressed.
+           setPlayerStatus("UNSTARTED");
+         }
+       } else {
+         playerRef.current.stopVideo();
+         setPlayerStatus("UNSTARTED");
+         setCurrentTime(0);
+         setDuration(0);
+       }
     }
-  }, [currentTrack]);
+  }, [currentTrack, activeMedia]);
 
-  const initPlayerNow = () => {
-    if (!currentTrack) return;
-    const containerId = iframeContainerId;
-    const el = document.getElementById(containerId);
-    if (!el) return;
-
-    if (playerRef.current) {
-      if (typeof playerRef.current.getPlayerState === "function") {
-        if (typeof playerRef.current.loadVideoById === "function") {
-          playerRef.current.loadVideoById({
-            videoId: currentTrack.youtubeId,
-            startSeconds: currentTrack.startTime
-          });
-          setPlayerStatus("BUFFERING");
-        }
-        return;
-      }
-    }
-
-    if (el.getAttribute('data-yt-init') === 'true') return;
-    el.setAttribute('data-yt-init', 'true');
-
-    playerRef.current = new window.YT.Player(containerId, {
-      height: "100%",
-      width: "100%",
-      videoId: currentTrack.youtubeId,
-      playerVars: {
-        autoplay: 1,
-        controls: 0,
-        start: currentTrack.startTime,
-        disablekb: 1,
-        fs: 0,
-        rel: 0,
-        showinfo: 0,
-        modestbranding: 1,
-        iv_load_policy: 3,
-        origin: window.location.origin
-      },
-      events: {
-        onReady: (event: any) => {
-          event.target.setVolume(volume);
-          if (isMuted) {
-            event.target.mute();
-          } else {
-            event.target.unMute();
-          }
-          setDuration(event.target.getDuration() || currentTrack.duration);
-          event.target.playVideo();
-        },
-        onStateChange: (event: any) => {
-          const state = event.data;
-          let statusStr: PlayerStatus = "UNSTARTED";
-          if (state === window.YT.PlayerState.PLAYING) statusStr = "PLAYING";
-          else if (state === window.YT.PlayerState.PAUSED) statusStr = "PAUSED";
-          else if (state === window.YT.PlayerState.BUFFERING) statusStr = "BUFFERING";
-          else if (state === window.YT.PlayerState.ENDED) statusStr = "ENDED";
-          else if (state === window.YT.PlayerState.CUED) statusStr = "CUED";
-          setPlayerStatus(statusStr);
-          if (state === window.YT.PlayerState.PLAYING) {
-            setDuration(event.target.getDuration() || currentTrack.duration);
-          }
-          if (state === window.YT.PlayerState.ENDED) {
-            handleTrackEnd();
-          }
-        }
-      }
-    });
-  };
-
-  // 3. Time polling interval
   useEffect(() => {
     if (playerStatus === "PLAYING") {
-      // High frequency updates (50ms) for extremely smooth vinyl and cassette reel animations
       timeUpdateInterval.current = window.setInterval(() => {
         if (playerRef.current && typeof playerRef.current.getCurrentTime === "function") {
           setCurrentTime(playerRef.current.getCurrentTime());
         }
       }, 50);
     } else {
-      if (timeUpdateInterval.current) {
-        clearInterval(timeUpdateInterval.current);
-        timeUpdateInterval.current = null;
-      }
+      if (timeUpdateInterval.current) { clearInterval(timeUpdateInterval.current); timeUpdateInterval.current = null; }
     }
-
-    return () => {
-      if (timeUpdateInterval.current) {
-        clearInterval(timeUpdateInterval.current);
-      }
-    };
+    return () => { if (timeUpdateInterval.current) clearInterval(timeUpdateInterval.current); };
   }, [playerStatus]);
 
-  // Handle video ended (Advance track or Auto-reverse Side)
-  const handleTrackEnd = () => {
-    if (!activeAlbum) return;
-
-    const nextIndex = currentTrackIndex + 1;
-    if (nextIndex < tracks.length) {
-      setCurrentTrackIndex(nextIndex);
-    } else {
-      // Side finished! Trigger Auto-Reverse
-      if (currentSide === "A") {
-        setTimeout(() => {
-          setCurrentSide("B");
-          setCurrentTrackIndex(0);
-        }, 1500); // 1.5s delay to simulate reverse mechanical sound/gap
-      } else {
-        setTimeout(() => {
-          setCurrentSide("A");
-          setCurrentTrackIndex(0);
-        }, 1500);
-      }
-    }
+  const startMedia = (album: Album, media: "lp" | "cassette") => {
+    setActiveAlbum(album);
+    setActiveMedia(media);
+    setCurrentSide("A");
+    setCurrentTrackIndex(0);
+    try { sessionStorage.setItem("activeAlbumId", String(album.id)); } catch(e) {}
+    
+    const firstTrack = album.tracksSideA[0];
+    setCurrentTime(firstTrack.startTime);
+    setPlayerStatus("UNSTARTED");
   };
 
   const selectAlbum = (album: Album | null) => {
     setActiveAlbum(album);
     try {
-      if (album) {
-        sessionStorage.setItem("activeAlbumId", String(album.id));
-      } else {
-        sessionStorage.removeItem("activeAlbumId");
-      }
+      if (album) sessionStorage.setItem("activeAlbumId", String(album.id));
+      else sessionStorage.removeItem("activeAlbumId");
     } catch(e) {}
     setCurrentSide("A");
     setCurrentTrackIndex(0);
     setCurrentTime(0);
   };
-
-  const selectMedia = (media: "lp" | "cassette" | null) => {
-    setActiveMedia(media);
-  };
-
-  const play = () => {
-    if (playerRef.current && typeof playerRef.current.playVideo === "function") {
-      playerRef.current.playVideo();
+  
+  const selectMedia = (media: "lp" | "cassette" | null) => { setActiveMedia(media); };
+  
+  const play = () => { 
+    if (playerRef.current) {
+      if ((playerStatus === "UNSTARTED" || playerStatus === "CUED") && currentTrack) {
+        // Load explicitly to bypass Safari frozen cue state
+        playerRef.current.loadVideoById({
+          videoId: currentTrack.youtubeId,
+          startSeconds: currentTime || currentTrack.startTime
+        });
+        setPlayerStatus("BUFFERING");
+      } else if (typeof playerRef.current.playVideo === "function") {
+        playerRef.current.playVideo();
+      }
     }
   };
-
-  const pause = () => {
-    if (playerRef.current && typeof playerRef.current.pauseVideo === "function") {
-      playerRef.current.pauseVideo();
-    }
-  };
-
-  const stop = () => {
-    if (playerRef.current && typeof playerRef.current.stopVideo === "function") {
-      playerRef.current.stopVideo();
-      setPlayerStatus("UNSTARTED");
-    }
-  };
-
-  const togglePlay = () => {
-    if (playerStatus === "PLAYING") {
-      pause();
-    } else {
-      play();
-    }
-  };
-
+  const pause = () => { if (playerRef.current && typeof playerRef.current.pauseVideo === "function") playerRef.current.pauseVideo(); };
+  const stop = () => { if (playerRef.current && typeof playerRef.current.stopVideo === "function") { playerRef.current.stopVideo(); setPlayerStatus("UNSTARTED"); } };
+  const togglePlay = () => { if (playerStatus === "PLAYING") pause(); else play(); };
   const seekTo = (seconds: number) => {
     if (playerRef.current && typeof playerRef.current.seekTo === "function") {
-      const targetTime = Math.max(0, Math.min(seconds, duration));
-      playerRef.current.seekTo(targetTime, true);
+      const trackDuration = duration || currentTrack?.duration || 9999;
+      const targetTime = Math.max(0, Math.min(seconds, trackDuration));
+      const state = typeof playerRef.current.getPlayerState === "function" ? playerRef.current.getPlayerState() : -1;
+      
+      if (state !== -1 && state !== 5) { // Not UNSTARTED and Not CUED
+        playerRef.current.seekTo(targetTime, true);
+      }
       setCurrentTime(targetTime);
     }
   };
-
   const setSide = (side: "A" | "B") => {
-    setCurrentSide(side);
-    setCurrentTrackIndex(0);
-    if (activeAlbum) {
-      const newTracks = side === "A" ? activeAlbum.tracksSideA : activeAlbum.tracksSideB;
-      setCurrentTime(newTracks[0]?.startTime || 0);
-    } else {
-      setCurrentTime(0);
-    }
+    setCurrentSide(side); setCurrentTrackIndex(0);
+    if (activeAlbum) { const newTracks = side === "A" ? activeAlbum.tracksSideA : activeAlbum.tracksSideB; setCurrentTime(newTracks[0]?.startTime || 0); }
+    else setCurrentTime(0);
   };
-
   const setTrackIndex = (index: number) => {
-    if (index >= 0 && index < tracks.length) {
-      setCurrentTrackIndex(index);
-      setCurrentTime(tracks[index].startTime);
-    }
+    if (index >= 0 && index < tracks.length) { setCurrentTrackIndex(index); setCurrentTime(tracks[index].startTime); }
   };
-
   const toggleMute = () => {
     if (playerRef.current && typeof playerRef.current.mute === "function") {
-      if (isMuted) {
-        playerRef.current.unMute();
-        setIsMuted(false);
-      } else {
-        playerRef.current.mute();
-        setIsMuted(true);
-      }
-    } else {
-      setIsMuted(!isMuted);
-    }
+      if (isMuted) { playerRef.current.unMute(); setIsMuted(false); }
+      else { playerRef.current.mute(); setIsMuted(true); }
+    } else { setIsMuted(!isMuted); }
   };
-
   const setVolume = (vol: number) => {
     const safeVol = Math.max(0, Math.min(vol, 100));
     setVolumeState(safeVol);
-    if (playerRef.current && typeof playerRef.current.setVolume === "function") {
-      playerRef.current.setVolume(safeVol);
-    }
+    if (playerRef.current && typeof playerRef.current.setVolume === "function") playerRef.current.setVolume(safeVol);
   };
-
-
   const resetPlayer = () => {
-    setActiveAlbum(null);
-    setActiveMedia(null);
-    setCurrentSide("A");
-    setCurrentTrackIndex(0);
-    setPlayerStatus("UNSTARTED");
-    setCurrentTime(0);
-    setDuration(0);
-    if (playerRef.current) {
-      try {
-        playerRef.current.destroy();
-      } catch (e) {
-        console.error(e);
-      }
-      playerRef.current = null;
+    setActiveAlbum(null); setActiveMedia(null); setCurrentSide("A"); setCurrentTrackIndex(0);
+    setPlayerStatus("UNSTARTED"); setCurrentTime(0); setDuration(0);
+    if (playerRef.current && typeof playerRef.current.stopVideo === "function") {
+      playerRef.current.stopVideo();
     }
   };
 
   return (
     <YTPlayerContext.Provider
       value={{
-        activeAlbum,
-        activeMedia,
-        currentSide,
-        currentTrackIndex,
-        currentTrack,
-        playerStatus,
-        currentTime,
-        duration,
-        isMuted,
-        volume,
-        selectAlbum,
-        selectMedia,
-        play,
-        pause,
-        stop,
-        togglePlay,
-        seekTo,
-        setSide,
-        setTrackIndex,
-        toggleMute,
-        setVolume,
-        resetPlayer,
-        initPlayerNow,
+        activeAlbum, activeMedia, currentSide, currentTrackIndex, currentTrack,
+        playerStatus, currentTime, duration, isMuted, volume,
+        selectAlbum, selectMedia, startMedia, play, pause, stop, togglePlay,
+        seekTo, setSide, setTrackIndex, toggleMute, setVolume, resetPlayer,
         iframeContainerId
       }}
     >
+      <div style={{ position: 'absolute', width: '200px', height: '200px', opacity: 0.01, pointerEvents: 'none', top: 0, left: 0, zIndex: -100 }}>
+        <div id={iframeContainerId}></div>
+      </div>
       {children}
     </YTPlayerContext.Provider>
   );

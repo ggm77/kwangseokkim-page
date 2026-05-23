@@ -37,10 +37,16 @@
     -moz-osx-font-smoothing: grayscale;
 }
 
-body {
+html, body {
     margin: 0;
-    background-color: #ffffff;
+    padding: 0;
+    max-width: 100%;
     overflow-x: hidden;
+    position: relative;
+}
+
+body {
+    background-color: #ffffff;
     min-height: 100vh;
 }
 
