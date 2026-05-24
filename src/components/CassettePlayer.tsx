@@ -208,6 +208,9 @@ export const CassettePlayer: React.FC = () => {
     else if (isFF) reelSpeedClass = "fast-forward";
     else if (isREW) reelSpeedClass = "rewind";
 
+    // Consider it at the end if it's within 1 second of the end
+    const isAtEnd = currentTime >= sideEndTime - 1;
+
     if (!tracksList) return null;
 
     const renderTapeFace = (faceClass: string, faceSide: "A" | "B") => {
@@ -350,8 +353,8 @@ export const CassettePlayer: React.FC = () => {
                             {/* Play Button */}
                             <button
                                 className={`deck-btn btn-play ${playIntent || playerStatus === "PLAYING" || playerStatus === "BUFFERING" ? "pressed" : ""}`}
-                                onClick={() => { setPlayIntent(true); play(); }}
-                                disabled={playerStatus === "PLAYING" || playerStatus === "BUFFERING"}
+                                onClick={() => { if (!isAtEnd) { setPlayIntent(true); play(); } }}
+                                disabled={playerStatus === "PLAYING" || playerStatus === "BUFFERING" || isAtEnd}
                             >
                                 <div className="btn-cap"><span className="icon">&#9658;</span><span className="label">PLAY</span></div>
                             </button>

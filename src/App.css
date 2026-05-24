@@ -224,7 +224,7 @@
 .album-cover-stack {
     position: relative;
     width: 100%;
-    aspect-ratio: 1;
+    padding-bottom: 100%;
     margin-bottom: 16px;
 }
 
@@ -232,7 +232,9 @@
     width: 80%;
     height: 100%;
     border-radius: 6px;
-    position: relative;
+    position: absolute;
+    top: 0;
+    left: 0;
     overflow: hidden;
     box-shadow: 0 10px 30px rgba(80, 50, 20, 0.12);
     transition: transform 0.35s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.35s ease;
@@ -519,6 +521,8 @@
     margin: 0 auto;
     padding: 100px 40px 60px;
     animation: fadeIn 0.5s ease;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .player-nav-header {
@@ -555,18 +559,20 @@
     display: grid;
     grid-template-columns: 380px 1fr;
     gap: 36px;
-    align-items: start;
+    align-items: stretch;
 }
 
 /* Sleeve Column — YouTube + Tracklist */
 .sleeve-column {
     perspective: 1000px;
+    display: flex;
+    flex-direction: column;
 }
 
 .cassette-sleeve-frame,
 .lp-sleeve-frame {
     width: 100%;
-    height: 480px;
+    height: 100%;
     border-radius: 10px;
     overflow: hidden;
     box-shadow: 0 12px 40px rgba(80, 50, 20, 0.12);
@@ -576,8 +582,9 @@
 /* Modern Retro Sleeve Styles - 3D Flip Card */
 .modern-sleeve-container {
     perspective: 1200px;
-    width: 100%;
-    height: 480px;
+    height: 100%;
+    aspect-ratio: 0.647;
+    margin: 0 auto;
     transition: transform 0.3s ease;
 }
 
@@ -608,7 +615,7 @@
     border-radius: 16px;
     overflow: hidden;
     box-shadow: 
-        0 20px 50px rgba(0, 0, 0, 0.3),
+        6px 10px 20px rgba(0, 0, 0, 0.25),
         inset 0 0 0 1px rgba(255, 255, 255, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.1);
     background: #111;
@@ -626,7 +633,7 @@
 
 .modern-sleeve-container:hover .modern-sleeve-face {
     box-shadow: 
-        0 30px 60px rgba(0, 0, 0, 0.4),
+        8px 14px 28px rgba(0, 0, 0, 0.3),
         inset 0 0 0 1px rgba(255, 255, 255, 0.3);
 }
 
@@ -1257,7 +1264,20 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    zoom: 0.8;
+    zoom: 0.95;
+    transform: translateY(-4px);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.turntable-deck-outer:hover {
+    transform: translateY(-9px);
+    box-shadow: 
+        inset 2px 2px 4px rgba(255, 255, 255, 0.4),
+        inset -2px -2px 5px rgba(0, 0, 0, 0.3), 
+        1px 1px 0 #8b4f23,
+        2px 2px 0 #7a431c,
+        3px 3px 0 #683815,
+        8px 14px 28px rgba(0, 0, 0, 0.3);
 }
 
 .platter-compartment {
@@ -1286,7 +1306,6 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    transition: transform 2.5s cubic-bezier(0.1, 0.8, 0.35, 1);
 }
 
 .turntable-platter.spin-active {
@@ -1372,7 +1391,6 @@
     text-align: center;
     z-index: 4;
     box-shadow: 0 0 6px rgba(0, 0, 0, 0.3);
-    background: #fff !important;
     color: var(--text-bright);
 }
 
@@ -1400,9 +1418,10 @@
 .label-spindle-hole {
     width: 8px;
     height: 8px;
-    background: #ccc;
+    background: #1a1a1a;
     border-radius: 50%;
-    border: 1px solid #ddd;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.8);
     position: absolute;
     top: 50%; left: 50%;
     transform: translate(-50%, -50%);
@@ -1411,20 +1430,24 @@
 /* Tonearm */
 .tonearm-assembly {
     position: absolute;
-    top: 18px;
-    left: 303px;
+    top: -52px;
+    left: 313px;
     width: 175px;
     height: 313px;
-    transform-origin: 125px 38px;
+    transform-origin: 93px 38px;
     transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     z-index: 100;
     pointer-events: none;
 }
 
+.tonearm-assembly.dragging {
+    transition: none !important;
+}
+
 .tonearm-pivot-base {
     position: absolute;
     top: 15px;
-    right: 28px;
+    right: 59.5px;
     width: 45px;
     height: 45px;
     background: radial-gradient(circle, #ddd 30%, #bbb 70%);
@@ -1435,6 +1458,7 @@
     justify-content: center;
     align-items: center;
     pointer-events: auto;
+    z-index: 10;
 }
 
 .weight-dial {
@@ -1445,29 +1469,35 @@
     border: 1px solid #ccc;
 }
 
-.tonearm-rod {
+.tonearm-rod-bent {
     position: absolute;
-    top: 38px;
-    right: 46px;
-    width: 8px;
-    height: 213px;
-    background: linear-gradient(90deg, #ccc 0%, #f5f5f5 50%, #bbb 100%);
-    border-radius: 3px;
-    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.4);
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
 }
+
+
 
 .tonearm-headshell {
     position: absolute;
-    top: 238px;
-    right: 31px;
-    width: 38px;
-    height: 56px;
+    top: 233px;
+    right: 0px;
+    width: 48px;
+    height: 66px;
     pointer-events: auto;
+    cursor: grab;
+    z-index: 5;
+}
+
+.tonearm-assembly.dragging .tonearm-headshell {
+    cursor: grabbing;
 }
 
 .stylus-cartridge {
-    width: 18px;
-    height: 35px;
+    width: 26px;
+    height: 44px;
     margin: 0 auto;
     background: #555555;
     border: 1px solid #333;
@@ -1479,14 +1509,14 @@
 .stylus-cartridge::after {
     content: '';
     position: absolute;
-    bottom: -8px;
+    bottom: -10px;
     left: 50%;
     transform: translateX(-50%);
     width: 0;
     height: 0;
-    border-left: 3px solid transparent;
-    border-right: 3px solid transparent;
-    border-top: 8px solid #aaaaaa;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 10px solid #aaaaaa;
 }
 
 .finger-lift {
@@ -1794,6 +1824,14 @@
         margin-top: 20px;
     }
 
+    .modern-sleeve-container {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 0.647;
+        max-width: 380px;
+        margin: 0 auto;
+    }
+
     .player-column {
         order: 1;
     }
@@ -1920,4 +1958,90 @@
     .album-grid-info {
         padding: 8px 8px 4px;
     }
+}
+
+/* Lyrics Modal */
+.lyrics-modal-backdrop {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    animation: fadeIn 0.3s ease;
+}
+
+.lyrics-modal-content {
+    width: 90%;
+    max-width: 500px;
+    max-height: 80vh;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.lyrics-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(250, 250, 250, 0.9);
+}
+
+.lyrics-title {
+    font-family: var(--font-serif);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+.close-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    padding: 0;
+    font-size: 16px;
+    background: transparent;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+.close-btn:hover {
+    background: rgba(0,0,0,0.05);
+    transform: scale(1.05);
+}
+
+.lyrics-body {
+    padding: 24px;
+    overflow-y: auto;
+    font-size: 16px;
+    line-height: 2;
+    color: var(--text-base);
+    text-align: center;
+    font-family: "Noto Sans KR", sans-serif;
+}
+
+.lyrics-line {
+    margin: 0;
+    min-height: 1em;
+}
+
+.track-item {
+    cursor: pointer;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.track-item:hover {
+    color: var(--accent);
+    transform: translateX(4px);
 }

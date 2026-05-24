@@ -71,16 +71,17 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const playerRef = useRef<any>(null);
   const timeUpdateInterval = useRef<number | null>(null);
+  const preventAutoPlayRef = useRef<boolean>(false);
   const iframeContainerId = "yt-global-player";
   
   const tracks = activeAlbum ? (currentSide === "A" ? activeAlbum.tracksSideA : activeAlbum.tracksSideB) : [];
   const currentTrack = tracks[currentTrackIndex] || null;
 
   // Refs for callbacks
-  const stateRef = useRef({ activeAlbum, currentSide, currentTrackIndex, tracks, currentTrack });
+  const stateRef = useRef({ activeAlbum, activeMedia, currentSide, currentTrackIndex, tracks, currentTrack });
   useEffect(() => {
-    stateRef.current = { activeAlbum, currentSide, currentTrackIndex, tracks, currentTrack };
-  }, [activeAlbum, currentSide, currentTrackIndex, tracks, currentTrack]);
+    stateRef.current = { activeAlbum, activeMedia, currentSide, currentTrackIndex, tracks, currentTrack };
+  }, [activeAlbum, activeMedia, currentSide, currentTrackIndex, tracks, currentTrack]);
 
   const volMuteRef = useRef({ volume, isMuted });
   useEffect(() => {
@@ -98,17 +99,25 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const handleTrackEnd = () => {
-    const { activeAlbum, currentSide, currentTrackIndex, tracks } = stateRef.current;
+    const { activeAlbum, currentTrackIndex, tracks } = stateRef.current;
     if (!activeAlbum) return;
 
     const nextIndex = currentTrackIndex + 1;
     if (nextIndex < tracks.length) {
       setCurrentTrackIndex(nextIndex);
     } else {
-      if (currentSide === "A") {
-        setTimeout(() => { setCurrentSide("B"); setCurrentTrackIndex(0); }, 1500);
-      } else {
-        setTimeout(() => { setCurrentSide("A"); setCurrentTrackIndex(0); }, 1500);
+      // Reached the end of the side. Stop playback before flipping so it doesn't auto-play.
+      preventAutoPlayRef.current = true;
+      setPlayerStatus("UNSTARTED");
+      if (playerRef.current && typeof playerRef.current.stopVideo === "function") {
+         playerRef.current.stopVideo();
+      }
+      // Return to the beginning of the current side ONLY for LP. Cassettes stay at the end.
+      if (stateRef.current.activeMedia === "lp") {
+        setTimeout(() => { 
+          setCurrentTrackIndex(0);
+          setCurrentTime(tracks[0].startTime);
+        }, 1500);
       }
     }
   };
@@ -171,15 +180,29 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (playerRef.current && typeof playerRef.current.loadVideoById === "function") {
        if (currentTrack && activeMedia) {
          // If it was playing or just ended (auto-advance), load and play
-         if (playerStatus === "PLAYING" || playerStatus === "ENDED" || playerStatus === "BUFFERING") {
-           playerRef.current.loadVideoById({
-             videoId: currentTrack.youtubeId,
-             startSeconds: currentTrack.startTime
-           });
-           setPlayerStatus("BUFFERING");
+         if (!preventAutoPlayRef.current && (playerStatus === "PLAYING" || playerStatus === "ENDED" || playerStatus === "BUFFERING")) {
+           const currentVid = typeof playerRef.current.getVideoData === 'function' ? playerRef.current.getVideoData().video_id : null;
+           const currentT = typeof playerRef.current.getCurrentTime === 'function' ? playerRef.current.getCurrentTime() : 0;
+           const isWithinTrack = currentT >= currentTrack.startTime - 1 && currentT <= currentTrack.startTime + currentTrack.duration;
+           
+           if (currentVid === currentTrack.youtubeId && isWithinTrack && playerStatus === "PLAYING") {
+               // Natural play-through within the same video. Do not reload to prevent stutter.
+           } else {
+               if (currentVid === currentTrack.youtubeId) {
+                   playerRef.current.seekTo(currentTrack.startTime, true);
+                   if (playerStatus === "PLAYING") playerRef.current.playVideo();
+               } else {
+                   playerRef.current.loadVideoById({
+                     videoId: currentTrack.youtubeId,
+                     startSeconds: currentTrack.startTime
+                   });
+               }
+               setPlayerStatus("BUFFERING");
+           }
          } else {
            // Otherwise (initial load or flipped side while paused), avoid cueing to prevent Safari freeze.
            // Just set to UNSTARTED so play() knows to load it when pressed.
+           preventAutoPlayRef.current = false;
            setPlayerStatus("UNSTARTED");
          }
        } else {
@@ -195,7 +218,32 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (playerStatus === "PLAYING") {
       timeUpdateInterval.current = window.setInterval(() => {
         if (playerRef.current && typeof playerRef.current.getCurrentTime === "function") {
-          setCurrentTime(playerRef.current.getCurrentTime());
+          const newTime = playerRef.current.getCurrentTime();
+          setCurrentTime(newTime);
+          
+          // Handle track crossing and side ending
+          const { tracks, currentTrackIndex } = stateRef.current;
+          if (tracks && tracks.length > 0) {
+              const lastTrack = tracks[tracks.length - 1];
+              const sideEndTime = lastTrack.startTime + lastTrack.duration;
+              
+              if (newTime >= sideEndTime - 0.2) {
+                  if (!preventAutoPlayRef.current) {
+                      handleTrackEnd();
+                  }
+              } else {
+                  let correctIndex = currentTrackIndex;
+                  for (let i = 0; i < tracks.length; i++) {
+                      if (newTime >= tracks[i].startTime && newTime < tracks[i].startTime + tracks[i].duration) {
+                          correctIndex = i;
+                          break;
+                      }
+                  }
+                  if (correctIndex !== currentTrackIndex) {
+                      setCurrentTrackIndex(correctIndex);
+                  }
+              }
+          }
         }
       }, 50);
     } else {
@@ -232,7 +280,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const play = () => { 
     if (playerRef.current) {
       if ((playerStatus === "UNSTARTED" || playerStatus === "CUED") && currentTrack) {
-        // Load explicitly to bypass Safari frozen cue state
+        // Must use loadVideoById for UNSTARTED player, seekTo will be ignored
         playerRef.current.loadVideoById({
           videoId: currentTrack.youtubeId,
           startSeconds: currentTime || currentTrack.startTime
@@ -248,8 +296,8 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const togglePlay = () => { if (playerStatus === "PLAYING") pause(); else play(); };
   const seekTo = (seconds: number) => {
     if (playerRef.current && typeof playerRef.current.seekTo === "function") {
-      const trackDuration = duration || currentTrack?.duration || 9999;
-      const targetTime = Math.max(0, Math.min(seconds, trackDuration));
+      const maxDuration = duration || 999999; // Do not cap by single track duration because time is absolute
+      const targetTime = Math.max(0, Math.min(seconds, maxDuration));
       const state = typeof playerRef.current.getPlayerState === "function" ? playerRef.current.getPlayerState() : -1;
       
       if (state !== -1 && state !== 5) { // Not UNSTARTED and Not CUED
@@ -259,9 +307,53 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
   const setSide = (side: "A" | "B") => {
-    setCurrentSide(side); setCurrentTrackIndex(0);
-    if (activeAlbum) { const newTracks = side === "A" ? activeAlbum.tracksSideA : activeAlbum.tracksSideB; setCurrentTime(newTracks[0]?.startTime || 0); }
-    else setCurrentTime(0);
+    if (activeMedia === "cassette" && activeAlbum) {
+      // Simulate physical tape flipping
+      const sideA = activeAlbum.tracksSideA;
+      const sideB = activeAlbum.tracksSideB;
+      
+      const startA = sideA[0].startTime;
+      const endA = sideA[sideA.length - 1].startTime + sideA[sideA.length - 1].duration;
+      const durA = endA - startA;
+      
+      const startB = sideB[0].startTime;
+      const endB = sideB[sideB.length - 1].startTime + sideB[sideB.length - 1].duration;
+      const durB = endB - startB;
+      
+      const physicalSideLength = Math.max(durA, durB);
+      
+      const oldStart = currentSide === "A" ? startA : startB;
+      const oldElapsed = Math.max(0, Math.min(currentTime - oldStart, physicalSideLength));
+      
+      const newElapsed = physicalSideLength - oldElapsed;
+      const newStart = side === "A" ? startA : startB;
+      let newTime = newStart + newElapsed;
+      
+      const newTracks = side === "A" ? sideA : sideB;
+      const newEnd = newTracks[newTracks.length - 1].startTime + newTracks[newTracks.length - 1].duration;
+      
+      if (newTime > newEnd) {
+          newTime = newEnd;
+      }
+      
+      let newIndex = newTracks.length - 1;
+      for (let i = 0; i < newTracks.length; i++) {
+          if (newTime >= newTracks[i].startTime && newTime < newTracks[i].startTime + newTracks[i].duration) {
+              newIndex = i;
+              break;
+          }
+      }
+      
+      setCurrentSide(side);
+      setCurrentTrackIndex(newIndex);
+      setCurrentTime(newTime);
+      seekTo(newTime);
+    } else {
+      // LP resets to start
+      setCurrentSide(side); setCurrentTrackIndex(0);
+      if (activeAlbum) { const newTracks = side === "A" ? activeAlbum.tracksSideA : activeAlbum.tracksSideB; setCurrentTime(newTracks[0]?.startTime || 0); }
+      else setCurrentTime(0);
+    }
   };
   const setTrackIndex = (index: number) => {
     if (index >= 0 && index < tracks.length) { setCurrentTrackIndex(index); setCurrentTime(tracks[index].startTime); }
@@ -295,7 +387,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         iframeContainerId
       }}
     >
-      <div style={{ position: 'absolute', width: '200px', height: '200px', opacity: 0.01, pointerEvents: 'none', top: 0, left: 0, zIndex: -100 }}>
+      <div style={{ position: 'absolute', width: '200px', height: '200px', opacity: 1, pointerEvents: 'none', top: 0, left: 0, zIndex: -100 }}>
         <div id={iframeContainerId}></div>
       </div>
       {children}

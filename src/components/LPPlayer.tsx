@@ -25,6 +25,14 @@ export const LPPlayer: React.FC = () => {
     const [isLifted, setIsLifted] = useState<boolean>(false);
     const [isLiftStopping, setIsLiftStopping] = useState<boolean>(false);
     const [playIntent, setPlayIntent] = useState<boolean>(false);
+    const [dragState, setDragState] = useState<{
+        isDragging: boolean;
+        startAngle: number;
+        startMouseAngle: number;
+        currentAngle: number | null;
+    }>({ isDragging: false, startAngle: 0, startMouseAngle: 0, currentAngle: null });
+    const [seekAngle, setSeekAngle] = useState<number | null>(null);
+    const seekTimeoutRef = useRef<any>(null);
     const liftStopTimerRef = useRef<any>(null);
     const playDelayTimerRef = useRef<any>(null);
     const sideChangeTimerRef = useRef<any>(null);
@@ -51,6 +59,8 @@ export const LPPlayer: React.FC = () => {
                 clearTimeout(playDelayTimerRef.current);
             if (liftStopTimerRef.current)
                 clearTimeout(liftStopTimerRef.current);
+            if (seekTimeoutRef.current)
+                clearTimeout(seekTimeoutRef.current);
         };
     }, []);
 
@@ -133,11 +143,11 @@ export const LPPlayer: React.FC = () => {
                         clearTimeout(liftStopTimerRef.current);
 
                     setPlayIntent(true);
-                    if (playDelayTimerRef.current)
+                    if (playDelayTimerRef.current) {
                         clearTimeout(playDelayTimerRef.current);
-                    playDelayTimerRef.current = setTimeout(() => {
-                        playRef.current();
-                    }, 1000);
+                        playDelayTimerRef.current = null;
+                    }
+                    playRef.current();
                 } else {
                     setIsLifted(true);
                     if (playDelayTimerRef.current)
@@ -216,14 +226,18 @@ export const LPPlayer: React.FC = () => {
 
             const dx = Cx - Px;
             const dy = Cy - Py;
-            const phi = Math.atan2(dy, dx) * (180 / Math.PI) - 90;
+            const anglePC = Math.atan2(dy, dx) * (180 / Math.PI);
+
+            const nx = Nx - Px;
+            const ny = Ny - Py;
+            const anglePN_0 = Math.atan2(ny, nx) * (180 / Math.PI);
 
             const getTheta = (R: number) => {
                 const cosAlpha = (L * L + D * D - R * R) / (2 * L * D);
                 const alpha =
                     Math.acos(Math.max(-1, Math.min(1, cosAlpha))) *
                     (180 / Math.PI);
-                return phi - alpha;
+                return anglePC - alpha - anglePN_0;
             };
 
             const R_outer = (platterRect.width / 2) * 0.9;
@@ -271,54 +285,148 @@ export const LPPlayer: React.FC = () => {
     const isLeverActive = playIntent || playerStatus === "PLAYING" || isBuffering;
 
     // While lever is active and not lifted, show playback-derived angle; while idle, resting
-    const finalAngle =
+    const calculatedAngle =
         isLifted || !isLeverActive
             ? ANGLE_REST
             : playbackAngle;
 
-    // Click on vinyl to seek
-    const handleVinylClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (sideChangeTimerRef.current) {
-            clearTimeout(sideChangeTimerRef.current);
-            sideChangeTimerRef.current = null;
+    const finalAngle =
+        dragState.isDragging && dragState.currentAngle !== null
+            ? dragState.currentAngle
+            : seekAngle !== null
+            ? seekAngle
+            : calculatedAngle;
+
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent | TouchEvent) => {
+            if (!dragState.isDragging || !pivotRef.current) return;
+            // prevent default for touch to avoid scrolling
+            if (e.type === 'touchmove') {
+                e.preventDefault();
+            }
+
+            const pivotRect = pivotRef.current.getBoundingClientRect();
+            const Px = pivotRect.left + pivotRect.width / 2;
+            const Py = pivotRect.top + pivotRect.height / 2;
+
+            const clientX = "touches" in e ? e.touches[0].clientX : (e as MouseEvent).clientX;
+            const clientY = "touches" in e ? e.touches[0].clientY : (e as MouseEvent).clientY;
+
+            const dx = clientX - Px;
+            const dy = clientY - Py;
+            const mouseAngle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+            let deltaAngle = mouseAngle - dragState.startMouseAngle;
+            if (deltaAngle > 180) deltaAngle -= 360;
+            if (deltaAngle < -180) deltaAngle += 360;
+
+            let newAngle = dragState.startAngle + deltaAngle;
+            newAngle = Math.max(ANGLE_REST - 5, Math.min(newAngle, ANGLE_INNER + 5));
+
+            setDragState((prev) => ({ ...prev, currentAngle: newAngle }));
+        };
+
+        const handleMouseUp = () => {
+            if (!dragState.isDragging) return;
+
+            if (dragState.currentAngle !== null) {
+                if (dragState.currentAngle < ANGLE_OUTER - 2) {
+                    if (playerStatusRef.current === "PLAYING" || playerStatusRef.current === "BUFFERING" || playIntent) {
+                        setIsLifted(true);
+                        setPlayIntent(false);
+                        if (playDelayTimerRef.current) clearTimeout(playDelayTimerRef.current);
+                        pauseRef.current();
+
+                        setIsLiftStopping(true);
+                        if (liftStopTimerRef.current) clearTimeout(liftStopTimerRef.current);
+                        liftStopTimerRef.current = setTimeout(() => {
+                            setIsLiftStopping(false);
+                        }, 300);
+                    }
+                } else {
+                    const clampedAngle = Math.max(ANGLE_OUTER, Math.min(dragState.currentAngle, ANGLE_INNER));
+                    const progress = (clampedAngle - ANGLE_OUTER) / (ANGLE_INNER - ANGLE_OUTER);
+                    const targetSeconds = sideStartTime + progress * sideDuration;
+
+                    seekTo(targetSeconds);
+                    setSeekAngle(dragState.currentAngle);
+                    if (seekTimeoutRef.current) clearTimeout(seekTimeoutRef.current);
+                    seekTimeoutRef.current = setTimeout(() => {
+                        setSeekAngle(null);
+                    }, 1000);
+
+                    if (sideChangeTimerRef.current) {
+                        clearTimeout(sideChangeTimerRef.current);
+                        sideChangeTimerRef.current = null;
+                    }
+                    setIsLifted(false);
+                    setIsLiftStopping(false);
+                    if (liftStopTimerRef.current) clearTimeout(liftStopTimerRef.current);
+
+                    if (playerStatusRef.current !== "PLAYING" && playerStatusRef.current !== "BUFFERING") {
+                        setPlayIntent(true);
+                        if (playDelayTimerRef.current) {
+                            clearTimeout(playDelayTimerRef.current);
+                        }
+                        playDelayTimerRef.current = setTimeout(() => {
+                            playRef.current();
+                        }, 500);
+                    }
+                }
+            }
+
+            setDragState({
+                isDragging: false,
+                startAngle: 0,
+                startMouseAngle: 0,
+                currentAngle: null,
+            });
+        };
+
+        if (dragState.isDragging) {
+            window.addEventListener("mousemove", handleMouseMove, { passive: false });
+            window.addEventListener("mouseup", handleMouseUp);
+            window.addEventListener("touchmove", handleMouseMove, { passive: false });
+            window.addEventListener("touchend", handleMouseUp);
         }
-        setIsLifted(false);
-        setIsLiftStopping(false);
-        if (liftStopTimerRef.current) clearTimeout(liftStopTimerRef.current);
-        if (!duration) return;
 
-        const rect = e.currentTarget.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
+        return () => {
+            window.removeEventListener("mousemove", handleMouseMove);
+            window.removeEventListener("mouseup", handleMouseUp);
+            window.removeEventListener("touchmove", handleMouseMove);
+            window.removeEventListener("touchend", handleMouseUp);
+        };
+    }, [
+        dragState,
+        ANGLE_REST,
+        ANGLE_OUTER,
+        ANGLE_INNER,
+        sideStartTime,
+        sideDuration,
+        seekTo,
+        playIntent,
+    ]);
 
-        const dx = e.clientX - centerX;
-        const dy = e.clientY - centerY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
+    const handleTonearmMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
+        if (!pivotRef.current || isSideChanging) return;
 
-        const maxRadius = (rect.width / 2) * 0.9; // Outer edge of the grooved area
-        const minRadius = (rect.width / 2) * 0.28; // Center label edge (approx 28% of radius)
+        const pivotRect = pivotRef.current.getBoundingClientRect();
+        const Px = pivotRect.left + pivotRect.width / 2;
+        const Py = pivotRect.top + pivotRect.height / 2;
 
-        // Clamp distance to playable groove area
-        const clampedDistance = Math.max(
-            minRadius,
-            Math.min(distance, maxRadius),
-        );
+        const clientX = "touches" in e ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+        const clientY = "touches" in e ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
 
-        // Map distance to progress (outer = 0%, inner = 100%)
-        const clickProgress =
-            1 - (clampedDistance - minRadius) / (maxRadius - minRadius);
-        const targetSeconds = sideStartTime + clickProgress * sideDuration;
+        const dx = clientX - Px;
+        const dy = clientY - Py;
+        const startMouseAngle = Math.atan2(dy, dx) * (180 / Math.PI);
 
-        seekTo(targetSeconds);
-
-        if (playerStatus !== "PLAYING" && playerStatus !== "BUFFERING") {
-            setPlayIntent(true);
-            if (playDelayTimerRef.current)
-                clearTimeout(playDelayTimerRef.current);
-            playDelayTimerRef.current = setTimeout(() => {
-                playRef.current();
-            }, 1000);
-        }
+        setDragState({
+            isDragging: true,
+            startAngle: finalAngle,
+            startMouseAngle,
+            currentAngle: finalAngle,
+        });
     };
 
     const isSpinning = isLeverActive || isLiftStopping;
@@ -347,7 +455,7 @@ export const LPPlayer: React.FC = () => {
                 anim.play();
             }
             let start: number | null = null;
-            const dur = 1000;
+            const dur = 500;
             const initialRate = anim.playbackRate;
             const speedUp = (timestamp: number) => {
                 if (!start) start = timestamp;
@@ -420,25 +528,26 @@ export const LPPlayer: React.FC = () => {
                             >
                                 <div
                                     className={`vinyl-record ${currentSide === "B" ? "flip-side-b" : ""}`}
-                                    onClick={handleVinylClick}
-                                    style={{ cursor: "pointer" }}
-                                    title="원하는 위치를 클릭하여 재생"
                                 >
                                     <div className="vinyl-face vinyl-front">
                                         <div className="vinyl-groove-lines"></div>
-                                        <div className="vinyl-label-center" style={{ backgroundColor: activeAlbum.coverColor }}>
-                                            <div className="label-album-title">{activeAlbum.title}</div>
-                                            <div className="label-track-title">김광석 (Kim Kwang-seok)</div>
-                                            <div className="label-side-indicator">SIDE A</div>
+                                        <div className="vinyl-label-center" style={{ 
+                                            backgroundColor: activeAlbum.coverColor,
+                                            backgroundImage: `url(https://img.youtube.com/vi/${activeAlbum.tracksSideA[0]?.youtubeId}/hqdefault.jpg)`,
+                                            backgroundSize: `auto ${(activeAlbum.coverScale || 1.34) * 100}%`,
+                                            backgroundPosition: 'center',
+                                        }}>
                                             <div className="label-spindle-hole"></div>
                                         </div>
                                     </div>
                                     <div className="vinyl-face vinyl-back">
                                         <div className="vinyl-groove-lines"></div>
-                                        <div className="vinyl-label-center" style={{ backgroundColor: activeAlbum.coverColor }}>
-                                            <div className="label-album-title">{activeAlbum.title}</div>
-                                            <div className="label-track-title">김광석 (Kim Kwang-seok)</div>
-                                            <div className="label-side-indicator">SIDE B</div>
+                                        <div className="vinyl-label-center" style={{ 
+                                            backgroundColor: activeAlbum.coverColor,
+                                            backgroundImage: `url(https://img.youtube.com/vi/${activeAlbum.tracksSideB[0]?.youtubeId || activeAlbum.tracksSideA[0]?.youtubeId}/hqdefault.jpg)`,
+                                            backgroundSize: `auto ${(activeAlbum.coverScale || 1.34) * 100}%`,
+                                            backgroundPosition: 'center',
+                                        }}>
                                             <div className="label-spindle-hole"></div>
                                         </div>
                                     </div>
@@ -446,7 +555,7 @@ export const LPPlayer: React.FC = () => {
                             </div>
                             {/* Draggable Tonearm Unit */}
                             <div
-                                className="tonearm-assembly"
+                                className={`tonearm-assembly ${dragState.isDragging ? "dragging" : ""}`}
                                 ref={tonearmRef}
                                 style={{
                                     transform: `rotate(${finalAngle}deg)`,
@@ -459,9 +568,35 @@ export const LPPlayer: React.FC = () => {
                                     <div className="weight-dial"></div>
                                 </div>
 
-                                <div className="tonearm-rod"></div>
+                                <div className="tonearm-rod-bent">
+                                    <svg width="175" height="313" viewBox="0 0 175 313" style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', zIndex: 1 }}>
+                                        <defs>
+                                            <linearGradient id="tonearm-grad" x1="0" y1="0" x2="1" y2="0">
+                                                <stop offset="0%" stopColor="#ccc"/>
+                                                <stop offset="30%" stopColor="#ffffff"/>
+                                                <stop offset="100%" stopColor="#999"/>
+                                            </linearGradient>
+                                            <filter id="drop-shadow" x="-20%" y="-20%" width="140%" height="140%">
+                                                <feDropShadow dx="2" dy="4" stdDeviation="4" floodOpacity="0.4"/>
+                                            </filter>
+                                        </defs>
+                                        <path 
+                                            d="M 93 38 C 110 80, 151 100, 151 150 L 151 245" 
+                                            fill="none" 
+                                            stroke="url(#tonearm-grad)" 
+                                            strokeWidth="16" 
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            filter="url(#drop-shadow)"
+                                        />
+                                    </svg>
+                                </div>
 
-                                <div className="tonearm-headshell">
+                                <div 
+                                    className="tonearm-headshell"
+                                    onMouseDown={handleTonearmMouseDown}
+                                    onTouchStart={handleTonearmMouseDown}
+                                >
                                     <div
                                         className="stylus-cartridge"
                                         ref={needleRef}
@@ -495,16 +630,12 @@ export const LPPlayer: React.FC = () => {
                                             );
 
                                         setPlayIntent(true);
-                                        if (playDelayTimerRef.current)
-                                            clearTimeout(
-                                                playDelayTimerRef.current,
-                                            );
-                                        playDelayTimerRef.current = setTimeout(
-                                            () => {
-                                                playRef.current();
-                                            },
-                                            1000,
-                                        );
+                                        if (playDelayTimerRef.current) {
+                                            clearTimeout(playDelayTimerRef.current);
+                                        }
+                                        playDelayTimerRef.current = setTimeout(() => {
+                                            playRef.current();
+                                        }, 500);
                                     } else {
                                         // Turn OFF
                                         setIsLifted(true);
