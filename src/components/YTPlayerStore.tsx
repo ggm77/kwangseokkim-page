@@ -72,6 +72,8 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const playerRef = useRef<any>(null);
   const timeUpdateInterval = useRef<number | null>(null);
   const preventAutoPlayRef = useRef<boolean>(false);
+  const currentTimeRef = useRef<number>(0);
+  const currentSideRef = useRef<"A" | "B">("A");
   const iframeContainerId = "yt-global-player";
   
   const tracks = activeAlbum ? (currentSide === "A" ? activeAlbum.tracksSideA : activeAlbum.tracksSideB) : [];
@@ -87,6 +89,9 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     volMuteRef.current = { volume, isMuted };
   }, [volume, isMuted]);
+
+  useEffect(() => { currentTimeRef.current = currentTime; }, [currentTime]);
+  useEffect(() => { currentSideRef.current = currentSide; }, [currentSide]);
 
   // Load API
   useEffect(() => {
@@ -277,19 +282,29 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   
   const selectMedia = (media: "lp" | "cassette" | null) => { setActiveMedia(media); };
   
-  const play = () => { 
-    if (playerRef.current) {
-      if ((playerStatus === "UNSTARTED" || playerStatus === "CUED") && currentTrack) {
-        // Must use loadVideoById for UNSTARTED player, seekTo will be ignored
-        playerRef.current.loadVideoById({
-          videoId: currentTrack.youtubeId,
-          startSeconds: currentTime || currentTrack.startTime
-        });
-        setPlayerStatus("BUFFERING");
-      } else if (typeof playerRef.current.playVideo === "function") {
-        playerRef.current.playVideo();
-      }
+  const play = () => {
+    if (!playerRef.current || !currentTrack) return;
+    const ytState = typeof playerRef.current.getPlayerState === "function"
+      ? playerRef.current.getPlayerState()
+      : -1;
+    const currentVid = typeof playerRef.current.getVideoData === "function"
+      ? playerRef.current.getVideoData()?.video_id
+      : null;
+      
+    // getVideoData() might return null/empty when the player is paused for a while.
+    // If it returns a string, we check if it matches. If it's falsy, we assume it matches
+    // because we haven't actively loaded a different video yet.
+    const isCorrectVideo = currentVid === currentTrack.youtubeId || !currentVid;
+        
+    if (ytState !== -1 && isCorrectVideo) {
+      playerRef.current.playVideo();
+    } else {
+      playerRef.current.loadVideoById({
+        videoId: currentTrack.youtubeId,
+        startSeconds: currentTimeRef.current || currentTrack.startTime
+      });
     }
+    setPlayerStatus("BUFFERING");
   };
   const pause = () => { if (playerRef.current && typeof playerRef.current.pauseVideo === "function") playerRef.current.pauseVideo(); };
   const stop = () => { if (playerRef.current && typeof playerRef.current.stopVideo === "function") { playerRef.current.stopVideo(); setPlayerStatus("UNSTARTED"); } };
@@ -322,8 +337,8 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       const physicalSideLength = Math.max(durA, durB);
       
-      const oldStart = currentSide === "A" ? startA : startB;
-      const oldElapsed = Math.max(0, Math.min(currentTime - oldStart, physicalSideLength));
+      const oldStart = currentSideRef.current === "A" ? startA : startB;
+      const oldElapsed = Math.max(0, Math.min(currentTimeRef.current - oldStart, physicalSideLength));
       
       const newElapsed = physicalSideLength - oldElapsed;
       const newStart = side === "A" ? startA : startB;
@@ -347,7 +362,20 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setCurrentSide(side);
       setCurrentTrackIndex(newIndex);
       setCurrentTime(newTime);
-      seekTo(newTime);
+      currentTimeRef.current = newTime;
+      currentSideRef.current = side;
+
+      // useEffect([currentTrack])가 BUFFERING 상태를 보고 currentTrack.startTime으로
+      // 재seek하지 못하도록 차단한 뒤, YT 플레이어를 직접 mirror 위치로 이동
+      preventAutoPlayRef.current = true;
+      if (playerRef.current && typeof playerRef.current.seekTo === "function") {
+        const ytState = typeof playerRef.current.getPlayerState === "function"
+          ? playerRef.current.getPlayerState()
+          : -1;
+        if (ytState !== -1 && ytState !== 5) {
+          playerRef.current.seekTo(newTime, true);
+        }
+      }
     } else {
       // LP resets to start
       setCurrentSide(side); setCurrentTrackIndex(0);

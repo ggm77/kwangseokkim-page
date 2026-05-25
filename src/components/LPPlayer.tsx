@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useYTPlayer } from "./YTPlayerStore";
 import { AlbumSleeve } from "./AlbumSleeve";
-
 export const LPPlayer: React.FC = () => {
     const {
         activeAlbum,
@@ -20,6 +19,7 @@ export const LPPlayer: React.FC = () => {
 
     const navigate = useNavigate();
 
+    const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
     const [viewSide, setViewSide] = useState<"A" | "B">(currentSide);
     const [isSideChanging, setIsSideChanging] = useState<boolean>(false);
     const [isLifted, setIsLifted] = useState<boolean>(false);
@@ -68,51 +68,71 @@ export const LPPlayer: React.FC = () => {
         if (currentSide === targetSide || isSideChanging) return;
 
         setIsSideChanging(true);
-
-        // 1. Pause playback and lift tonearm
         setIsLifted(true);
         if (playDelayTimerRef.current) clearTimeout(playDelayTimerRef.current);
         setPlayIntent(false);
         pauseRef.current();
 
-        setIsLiftStopping(true);
-        if (liftStopTimerRef.current) clearTimeout(liftStopTimerRef.current);
-        liftStopTimerRef.current = setTimeout(() => {
-            setIsLiftStopping(false);
-        }, 300);
-
-        // 2. Wait for tonearm to return, then flip the side
         if (sideChangeTimerRef.current) clearTimeout(sideChangeTimerRef.current);
-        sideChangeTimerRef.current = setTimeout(() => {
-            // Force platter to stop completely right before flip
+
+        const doFlip = () => {
             cancelAnimationFrame(slowDownReqRef.current);
             if (spinAnimRef.current) {
                 spinAnimRef.current.pause();
                 spinAnimRef.current.playbackRate = 0;
             }
-
             setSide(targetSide);
             setViewSide(targetSide);
-            
-            // Wait briefly so the user sees the flipped and stopped record
             setTimeout(() => {
                 setIsSideChanging(false);
-                
-                // 3. Auto-play after flipping
                 setIsLifted(false);
                 setPlayIntent(true);
                 playDelayTimerRef.current = setTimeout(() => {
                     playRef.current();
                 }, 1000);
             }, 800);
-        }, 1200);
+        };
+
+        if (isSpinning) {
+            // 레코드가 돌고 있으면 서서히 멈춘 뒤 면 전환
+            setIsLiftStopping(true);
+            if (liftStopTimerRef.current) clearTimeout(liftStopTimerRef.current);
+            liftStopTimerRef.current = setTimeout(() => {
+                setIsLiftStopping(false);
+            }, 300);
+
+            sideChangeTimerRef.current = setTimeout(doFlip, 1200);
+        } else {
+            // 이미 멈춰있으면 바로 면 전환
+            doFlip();
+        }
     };
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
 
     useEffect(() => {
         if (!activeAlbum || !currentTrack) {
             navigate("/");
         }
     }, [activeAlbum, currentTrack, navigate]);
+
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement);
+        };
+        document.addEventListener("fullscreenchange", handleFullscreenChange);
+        return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    }, []);
+
+    const toggleFullscreen = () => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+        } else {
+            document.exitFullscreen();
+        }
+    };
 
     useEffect(() => {
         if (playerStatus === "PLAYING") {
@@ -503,9 +523,28 @@ export const LPPlayer: React.FC = () => {
                 >
                     &larr; 보관소로 돌아가기
                 </button>
-                <div className="album-info-display">
-                    <span className="retro-tag">HI-FI TURNTABLE</span>
-                    <h2 className="album-display-title">{activeAlbum.title}</h2>
+                <div className="nav-right-group">
+                    <div className="album-info-display">
+                        <span className="retro-tag">HI-FI TURNTABLE</span>
+                        <h2 className="album-display-title">{activeAlbum.title}</h2>
+                    </div>
+                    <button className="fullscreen-btn retro-btn" onClick={toggleFullscreen} title={isFullscreen ? "전체 화면 종료" : "전체 화면"}>
+                        {isFullscreen ? (
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter">
+                                <polyline points="5,1 5,5 1,5" />
+                                <polyline points="11,1 11,5 15,5" />
+                                <polyline points="5,15 5,11 1,11" />
+                                <polyline points="11,15 11,11 15,11" />
+                            </svg>
+                        ) : (
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter">
+                                <polyline points="1,5 1,1 5,1" />
+                                <polyline points="15,5 15,1 11,1" />
+                                <polyline points="1,11 1,15 5,15" />
+                                <polyline points="15,11 15,15 11,15" />
+                            </svg>
+                        )}
+                    </button>
                 </div>
             </div>
 
@@ -569,7 +608,7 @@ export const LPPlayer: React.FC = () => {
                                 </div>
 
                                 <div className="tonearm-rod-bent">
-                                    <svg width="175" height="313" viewBox="0 0 175 313" style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', zIndex: 1 }}>
+                                    <svg width="175" height="313" viewBox="0 0 175 313" preserveAspectRatio="none" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1 }}>
                                         <defs>
                                             <linearGradient id="tonearm-grad" x1="0" y1="0" x2="1" y2="0">
                                                 <stop offset="0%" stopColor="#ccc"/>

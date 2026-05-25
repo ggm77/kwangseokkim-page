@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useYTPlayer } from "./YTPlayerStore";
 import { AlbumSleeve } from "./AlbumSleeve";
-
 export const CassettePlayer: React.FC = () => {
     const {
         activeAlbum,
@@ -21,11 +20,16 @@ export const CassettePlayer: React.FC = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
+
+    useEffect(() => {
         if (!activeAlbum || !currentTrack) {
             navigate("/");
         }
     }, [activeAlbum, currentTrack, navigate]);
 
+    const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
     const [isFlipped, setIsFlipped] = useState<boolean>(false);
     const [isEjecting, setIsEjecting] = useState<boolean>(false);
     const [isFF, setIsFF] = useState<boolean>(false);
@@ -38,6 +42,22 @@ export const CassettePlayer: React.FC = () => {
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement);
+        };
+        document.addEventListener("fullscreenchange", handleFullscreenChange);
+        return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    }, []);
+
+    const toggleFullscreen = () => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+        } else {
+            document.exitFullscreen();
+        }
+    };
 
     // Sync playIntent with actual player status
     useEffect(() => {
@@ -279,9 +299,28 @@ export const CassettePlayer: React.FC = () => {
                 }}>
                     &larr; 보관소로 돌아가기
                 </button>
-                <div className="album-info-display">
-                    <span className="retro-tag">CASSETTE DECK</span>
-                    <h2 className="album-display-title">{activeAlbum.title}</h2>
+                <div className="nav-right-group">
+                    <div className="album-info-display">
+                        <span className="retro-tag">CASSETTE DECK</span>
+                        <h2 className="album-display-title">{activeAlbum.title}</h2>
+                    </div>
+                    <button className="fullscreen-btn retro-btn" onClick={toggleFullscreen} title={isFullscreen ? "전체 화면 종료" : "전체 화면"}>
+                        {isFullscreen ? (
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter">
+                                <polyline points="5,1 5,5 1,5" />
+                                <polyline points="11,1 11,5 15,5" />
+                                <polyline points="5,15 5,11 1,11" />
+                                <polyline points="11,15 11,11 15,11" />
+                            </svg>
+                        ) : (
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter">
+                                <polyline points="1,5 1,1 5,1" />
+                                <polyline points="15,5 15,1 11,1" />
+                                <polyline points="1,11 1,15 5,15" />
+                                <polyline points="15,11 15,15 11,15" />
+                            </svg>
+                        )}
+                    </button>
                 </div>
             </div>
 
@@ -302,6 +341,7 @@ export const CassettePlayer: React.FC = () => {
 
                         {/* The 3D Rotating Cassette Tape */}
                         <div className="tape-compartment">
+                            <div className={`cassette-eject-lifter ${isEjecting ? "eject-anim" : ""}`}>
                             <div className={`cassette-tape-wrap ${isFlipped ? "flipped-side" : ""}`}>
                                 {/* 3D Extrusion Layers (Rounded Corners) */}
                                 {Array.from({ length: 15 }).map((_, i) => {
@@ -319,6 +359,7 @@ export const CassettePlayer: React.FC = () => {
                                 {/* Cassette Faces */}
                                 {renderTapeFace("tape-front", "A")}
                                 {renderTapeFace("tape-back", "B")}
+                            </div>
                             </div>
                         </div>
 
