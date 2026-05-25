@@ -543,12 +543,7 @@
     filter: blur(90px);
     opacity: 0.28;
     animation: orbFloat 14s ease-in-out infinite;
-    transition: opacity 2s ease;
-}
-
-.player-bg--playing .player-bg-orb {
-    opacity: 0.52;
-    animation-name: orbPulse;
+    transition: opacity 1.5s ease;
 }
 
 .player-bg-orb--1 {
@@ -557,7 +552,6 @@
     top: -35%;
     left: -20%;
     animation-delay: 0s;
-    animation-duration: 14s;
 }
 
 .player-bg-orb--2 {
@@ -578,9 +572,26 @@
     animation-duration: 17s;
 }
 
-.player-bg--playing .player-bg-orb--1 { animation-duration: 6s; }
-.player-bg--playing .player-bg-orb--2 { animation-duration: 5s; }
-.player-bg--playing .player-bg-orb--3 { animation-duration: 7.5s; }
+/* 재생 중: 빠른 박자형 pulse — 0.8s 주기, 1/3씩 엇갈려 파도 효과 */
+.player-bg--playing .player-bg-orb {
+    opacity: 0.52;
+}
+
+.player-bg--playing .player-bg-orb--1 {
+    animation: orbBeat 0.8s ease-in-out infinite 0s;
+}
+
+.player-bg--playing .player-bg-orb--2 {
+    animation: orbBeat 0.8s ease-in-out infinite -0.27s;
+}
+
+.player-bg--playing .player-bg-orb--3 {
+    animation: orbBeat 0.8s ease-in-out infinite -0.54s;
+}
+
+.player-bg--playing .player-bg-image {
+    animation: imagePulse 0.8s ease-in-out infinite;
+}
 
 @keyframes orbFloat {
     0%, 100% { transform: translate(0, 0) scale(1); }
@@ -588,12 +599,17 @@
     66%       { transform: translate(-5%, -3%) scale(0.95); }
 }
 
-@keyframes orbPulse {
+@keyframes orbBeat {
     0%, 100% { transform: translate(0, 0) scale(1); }
-    20%       { transform: translate(4%, 5%) scale(1.12); }
-    40%       { transform: translate(-3%, 4%) scale(0.92); }
-    60%       { transform: translate(5%, -4%) scale(1.08); }
-    80%       { transform: translate(-4%, -3%) scale(0.96); }
+    25%       { transform: translate(2%, 1.5%) scale(1.13); }
+    50%       { transform: translate(-1%, 0.5%) scale(0.92); }
+    75%       { transform: translate(1%, -1.5%) scale(1.05); }
+}
+
+@keyframes imagePulse {
+    0%, 100% { filter: blur(80px) saturate(3.5) brightness(0.68) contrast(1.1); }
+    25%       { filter: blur(70px) saturate(4.5) brightness(0.74) contrast(1.18); }
+    50%       { filter: blur(85px) saturate(3.2) brightness(0.65) contrast(1.05); }
 }
 
 .player-bg-overlay {
