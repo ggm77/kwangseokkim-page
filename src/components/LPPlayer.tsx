@@ -69,44 +69,44 @@ export const LPPlayer: React.FC = () => {
         if (currentSide === targetSide || isSideChanging) return;
 
         setIsSideChanging(true);
-
-        // 1. Pause playback and lift tonearm
         setIsLifted(true);
         if (playDelayTimerRef.current) clearTimeout(playDelayTimerRef.current);
         setPlayIntent(false);
         pauseRef.current();
 
-        setIsLiftStopping(true);
-        if (liftStopTimerRef.current) clearTimeout(liftStopTimerRef.current);
-        liftStopTimerRef.current = setTimeout(() => {
-            setIsLiftStopping(false);
-        }, 300);
-
-        // 2. Wait for tonearm to return, then flip the side
         if (sideChangeTimerRef.current) clearTimeout(sideChangeTimerRef.current);
-        sideChangeTimerRef.current = setTimeout(() => {
-            // Force platter to stop completely right before flip
+
+        const doFlip = () => {
             cancelAnimationFrame(slowDownReqRef.current);
             if (spinAnimRef.current) {
                 spinAnimRef.current.pause();
                 spinAnimRef.current.playbackRate = 0;
             }
-
             setSide(targetSide);
             setViewSide(targetSide);
-            
-            // Wait briefly so the user sees the flipped and stopped record
             setTimeout(() => {
                 setIsSideChanging(false);
-                
-                // 3. Auto-play after flipping
                 setIsLifted(false);
                 setPlayIntent(true);
                 playDelayTimerRef.current = setTimeout(() => {
                     playRef.current();
                 }, 1000);
             }, 800);
-        }, 1200);
+        };
+
+        if (isSpinning) {
+            // 레코드가 돌고 있으면 서서히 멈춘 뒤 면 전환
+            setIsLiftStopping(true);
+            if (liftStopTimerRef.current) clearTimeout(liftStopTimerRef.current);
+            liftStopTimerRef.current = setTimeout(() => {
+                setIsLiftStopping(false);
+            }, 300);
+
+            sideChangeTimerRef.current = setTimeout(doFlip, 1200);
+        } else {
+            // 이미 멈춰있으면 바로 면 전환
+            doFlip();
+        }
     };
 
     useEffect(() => {
