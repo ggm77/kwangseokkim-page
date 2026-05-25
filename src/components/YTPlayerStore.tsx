@@ -282,24 +282,14 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   
   const selectMedia = (media: "lp" | "cassette" | null) => { setActiveMedia(media); };
   
-  const play = () => { 
+  const play = () => {
     if (playerRef.current) {
       if ((playerStatus === "UNSTARTED" || playerStatus === "CUED") && currentTrack) {
         const targetTime = currentTimeRef.current || currentTrack.startTime;
-        const currentVid = typeof playerRef.current.getVideoData === "function"
-          ? playerRef.current.getVideoData()?.video_id
-          : null;
-        if (currentVid === currentTrack.youtubeId) {
-          // 같은 영상이 이미 로드된 경우 loadVideoById는 startSeconds를 무시할 수 있으므로
-          // seekTo + playVideo로 정확한 위치에서 재생
-          playerRef.current.seekTo(targetTime, true);
-          playerRef.current.playVideo();
-        } else {
-          playerRef.current.loadVideoById({
-            videoId: currentTrack.youtubeId,
-            startSeconds: targetTime
-          });
-        }
+        playerRef.current.loadVideoById({
+          videoId: currentTrack.youtubeId,
+          startSeconds: targetTime
+        });
         setPlayerStatus("BUFFERING");
       } else if (typeof playerRef.current.playVideo === "function") {
         playerRef.current.playVideo();
