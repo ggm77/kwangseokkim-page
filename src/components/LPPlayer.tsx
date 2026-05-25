@@ -21,6 +21,7 @@ export const LPPlayer: React.FC = () => {
 
     const navigate = useNavigate();
 
+    const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
     const [viewSide, setViewSide] = useState<"A" | "B">(currentSide);
     const [isSideChanging, setIsSideChanging] = useState<boolean>(false);
     const [isLifted, setIsLifted] = useState<boolean>(false);
@@ -114,6 +115,22 @@ export const LPPlayer: React.FC = () => {
             navigate("/");
         }
     }, [activeAlbum, currentTrack, navigate]);
+
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsFullscreen(!!document.fullscreenElement);
+        };
+        document.addEventListener("fullscreenchange", handleFullscreenChange);
+        return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    }, []);
+
+    const toggleFullscreen = () => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+        } else {
+            document.exitFullscreen();
+        }
+    };
 
     useEffect(() => {
         if (playerStatus === "PLAYING") {
@@ -504,9 +521,22 @@ export const LPPlayer: React.FC = () => {
                 >
                     &larr; 보관소로 돌아가기
                 </button>
-                <div className="album-info-display">
-                    <span className="retro-tag">HI-FI TURNTABLE</span>
-                    <h2 className="album-display-title">{activeAlbum.title}</h2>
+                <div className="nav-right-group">
+                    <div className="album-info-display">
+                        <span className="retro-tag">HI-FI TURNTABLE</span>
+                        <h2 className="album-display-title">{activeAlbum.title}</h2>
+                    </div>
+                    <button className="fullscreen-btn retro-btn" onClick={toggleFullscreen} title={isFullscreen ? "전체 화면 종료" : "전체 화면"}>
+                        {isFullscreen ? (
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M5.5 0a.5.5 0 0 1 .5.5v4A.5.5 0 0 1 5.5 5h-4a.5.5 0 0 1 0-1H5V.5a.5.5 0 0 1 .5-.5zm5 0a.5.5 0 0 1 .5.5V4h3.5a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5v-4a.5.5 0 0 1 .5-.5zM0 10.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V11H.5a.5.5 0 0 1-.5-.5zm10 0a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1H11v3.5a.5.5 0 0 1-1 0v-4z"/>
+                            </svg>
+                        ) : (
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                                <path d="M1.5 1h4a.5.5 0 0 1 0 1H2.5v3a.5.5 0 0 1-1 0V1.5A.5.5 0 0 1 1.5 1zm9 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0V2.5h-3a.5.5 0 0 1 0-1h3.5zM1.5 11a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1H1.5A.5.5 0 0 1 1 14.5v-3a.5.5 0 0 1 .5-.5zm13 0a.5.5 0 0 1 .5.5v3.5a.5.5 0 0 1-.5.5H11a.5.5 0 0 1 0-1h3v-3a.5.5 0 0 1 .5-.5z"/>
+                            </svg>
+                        )}
+                    </button>
                 </div>
             </div>
 

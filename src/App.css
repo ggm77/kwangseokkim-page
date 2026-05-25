@@ -538,6 +538,20 @@
     align-items: flex-end;
 }
 
+.nav-right-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fullscreen-btn {
+    padding: 7px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
 .retro-tag {
     font-family: var(--font-mono);
     font-size: 11px;
