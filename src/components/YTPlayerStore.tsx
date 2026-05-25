@@ -347,7 +347,6 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setCurrentSide(side);
       setCurrentTrackIndex(newIndex);
       setCurrentTime(newTime);
-      seekTo(newTime);
     } else {
       // LP resets to start
       setCurrentSide(side); setCurrentTrackIndex(0);
