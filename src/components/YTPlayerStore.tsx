@@ -72,6 +72,8 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const playerRef = useRef<any>(null);
   const timeUpdateInterval = useRef<number | null>(null);
   const preventAutoPlayRef = useRef<boolean>(false);
+  const currentTimeRef = useRef<number>(0);
+  const currentSideRef = useRef<"A" | "B">("A");
   const iframeContainerId = "yt-global-player";
   
   const tracks = activeAlbum ? (currentSide === "A" ? activeAlbum.tracksSideA : activeAlbum.tracksSideB) : [];
@@ -87,6 +89,9 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   useEffect(() => {
     volMuteRef.current = { volume, isMuted };
   }, [volume, isMuted]);
+
+  useEffect(() => { currentTimeRef.current = currentTime; }, [currentTime]);
+  useEffect(() => { currentSideRef.current = currentSide; }, [currentSide]);
 
   // Load API
   useEffect(() => {
@@ -280,11 +285,21 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const play = () => { 
     if (playerRef.current) {
       if ((playerStatus === "UNSTARTED" || playerStatus === "CUED") && currentTrack) {
-        // Must use loadVideoById for UNSTARTED player, seekTo will be ignored
-        playerRef.current.loadVideoById({
-          videoId: currentTrack.youtubeId,
-          startSeconds: currentTime || currentTrack.startTime
-        });
+        const targetTime = currentTimeRef.current || currentTrack.startTime;
+        const currentVid = typeof playerRef.current.getVideoData === "function"
+          ? playerRef.current.getVideoData()?.video_id
+          : null;
+        if (currentVid === currentTrack.youtubeId) {
+          // 같은 영상이 이미 로드된 경우 loadVideoById는 startSeconds를 무시할 수 있으므로
+          // seekTo + playVideo로 정확한 위치에서 재생
+          playerRef.current.seekTo(targetTime, true);
+          playerRef.current.playVideo();
+        } else {
+          playerRef.current.loadVideoById({
+            videoId: currentTrack.youtubeId,
+            startSeconds: targetTime
+          });
+        }
         setPlayerStatus("BUFFERING");
       } else if (typeof playerRef.current.playVideo === "function") {
         playerRef.current.playVideo();
@@ -322,8 +337,8 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       
       const physicalSideLength = Math.max(durA, durB);
       
-      const oldStart = currentSide === "A" ? startA : startB;
-      const oldElapsed = Math.max(0, Math.min(currentTime - oldStart, physicalSideLength));
+      const oldStart = currentSideRef.current === "A" ? startA : startB;
+      const oldElapsed = Math.max(0, Math.min(currentTimeRef.current - oldStart, physicalSideLength));
       
       const newElapsed = physicalSideLength - oldElapsed;
       const newStart = side === "A" ? startA : startB;
