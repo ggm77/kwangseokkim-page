@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useYTPlayer } from "./YTPlayerStore";
 import { AlbumSleeve } from "./AlbumSleeve";
 
+
 export const LPPlayer: React.FC = () => {
     const {
         activeAlbum,
@@ -569,7 +570,7 @@ export const LPPlayer: React.FC = () => {
                                 </div>
 
                                 <div className="tonearm-rod-bent">
-                                    <svg width="175" height="313" viewBox="0 0 175 313" style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', zIndex: 1 }}>
+                                    <svg width="175" height="313" viewBox="0 0 175 313" preserveAspectRatio="none" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none', zIndex: 1 }}>
                                         <defs>
                                             <linearGradient id="tonearm-grad" x1="0" y1="0" x2="1" y2="0">
                                                 <stop offset="0%" stopColor="#ccc"/>

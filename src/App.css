@@ -557,7 +557,7 @@
 
 .player-main-layout {
     display: grid;
-    grid-template-columns: 380px 1fr;
+    grid-template-columns: minmax(200px, 380px) auto;
     gap: 36px;
     align-items: stretch;
 }
@@ -1258,8 +1258,8 @@
         linear-gradient(135deg, #c68f5c 0%, #a66530 50%, #80481d 100%);
     padding: 36px;
     position: relative;
-    aspect-ratio: 1 / 1;
-    max-width: 520px;
+    width: 480px;
+    height: 480px;
     margin: 0 auto;
     display: flex;
     justify-content: center;
@@ -1650,15 +1650,15 @@
 /* Vintage printed label on the wood deck */
 .lever-label {
     position: absolute;
-    top: clamp(-22px, -3vw, -13px);
-    bottom: auto;
+    top: auto;
+    bottom: -18px;
     left: 50%;
     transform: translateX(-50%);
     font-family: var(--font-mono);
-    font-size: clamp(7.5px, 1.5vw, 13px);
+    font-size: 11px;
     font-weight: bold;
     letter-spacing: 0px;
-    color: #e0d5c1; /* Faded print color */
+    color: #e0d5c1;
     margin: 0;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
     transition: none;
@@ -1842,6 +1842,8 @@
     }
     .turntable-deck-outer {
         zoom: 1;
+        width: 340px;
+        height: 340px;
     }
 
     .cassette-tape-wrap {
@@ -1868,13 +1870,13 @@
         left: 227px;
         width: 131px;
         height: 234px;
-        transform-origin: 94px 28px;
+        transform-origin: 70px 28px;
     }
 
     .tonearm-pivot-base {
         width: 34px;
         height: 34px;
-        right: 20px;
+        right: 44px;
         top: 11px;
     }
 
@@ -1888,8 +1890,8 @@
     .tonearm-headshell {
         width: 28px;
         height: 42px;
-        top: 178px;
-        right: 23px;
+        top: 174px;
+        right: 4px;
     }
 
     .stylus-cartridge {
@@ -1909,6 +1911,12 @@
         left: 16px;
         right: 16px;
         gap: 16px;
+    }
+
+    .lever-label {
+        font-size: 9px;
+        top: auto;
+        bottom: -14px;
     }
 
     .turntable-right-controls {
