@@ -848,9 +848,26 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    overflow: hidden;
+    overflow: visible;
     position: relative;
     perspective: 1000px;
+}
+
+.cassette-eject-lifter {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.cassette-eject-lifter.eject-anim {
+    animation: ejectUp 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes ejectUp {
+    0%   { transform: translateY(0); }
+    20%  { transform: translateY(-70px); }
+    80%  { transform: translateY(-70px); }
+    100% { transform: translateY(0); }
 }
 
 .cassette-tape-wrap {
@@ -859,10 +876,6 @@
     position: relative;
     transform-style: preserve-3d;
     transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.cassette-tape-wrap.eject-anim {
-    animation: ejectUp 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .cassette-tape-wrap.flipped-side {

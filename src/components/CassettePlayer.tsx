@@ -302,6 +302,7 @@ export const CassettePlayer: React.FC = () => {
 
                         {/* The 3D Rotating Cassette Tape */}
                         <div className="tape-compartment">
+                            <div className={`cassette-eject-lifter ${isEjecting ? "eject-anim" : ""}`}>
                             <div className={`cassette-tape-wrap ${isFlipped ? "flipped-side" : ""}`}>
                                 {/* 3D Extrusion Layers (Rounded Corners) */}
                                 {Array.from({ length: 15 }).map((_, i) => {
@@ -319,6 +320,7 @@ export const CassettePlayer: React.FC = () => {
                                 {/* Cassette Faces */}
                                 {renderTapeFace("tape-front", "A")}
                                 {renderTapeFace("tape-back", "B")}
+                            </div>
                             </div>
                         </div>
 
