@@ -528,14 +528,14 @@ export const LPPlayer: React.FC = () => {
                     </div>
                     <button className="fullscreen-btn retro-btn" onClick={toggleFullscreen} title={isFullscreen ? "전체 화면 종료" : "전체 화면"}>
                         {isFullscreen ? (
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter">
                                 <polyline points="5,1 5,5 1,5" />
                                 <polyline points="11,1 11,5 15,5" />
                                 <polyline points="5,15 5,11 1,11" />
                                 <polyline points="11,15 11,11 15,11" />
                             </svg>
                         ) : (
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter">
                                 <polyline points="1,5 1,1 5,1" />
                                 <polyline points="15,5 15,1 11,1" />
                                 <polyline points="1,11 1,15 5,15" />
