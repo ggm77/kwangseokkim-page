@@ -290,9 +290,13 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const currentVid = typeof playerRef.current.getVideoData === "function"
       ? playerRef.current.getVideoData()?.video_id
       : null;
-    // YT 플레이어에 올바른 영상이 이미 로드되어 있으면(예: setSide의 seekTo로 위치까지 이동된 경우)
-    // loadVideoById는 startSeconds를 무시할 수 있으므로 단순히 playVideo로 재개
-    if (ytState !== -1 && currentVid === currentTrack.youtubeId) {
+      
+    // getVideoData() might return null/empty when the player is paused for a while.
+    // If it returns a string, we check if it matches. If it's falsy, we assume it matches
+    // because we haven't actively loaded a different video yet.
+    const isCorrectVideo = currentVid === currentTrack.youtubeId || !currentVid;
+        
+    if (ytState !== -1 && isCorrectVideo) {
       playerRef.current.playVideo();
     } else {
       playerRef.current.loadVideoById({
