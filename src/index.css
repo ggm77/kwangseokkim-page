@@ -5,30 +5,29 @@
     --font-serif: 'Nanum Myeongjo', Georgia, serif;
     --font-mono: 'Share Tech Mono', monospace;
 
-    /* Bright Warm Vintage Palette with Personal Point Colors */
-    --bg-page: #f5f0eb;
-    --bg-deck: #e8e1d5;
-    --bg-panel: rgba(245, 240, 235, 0.85);
-    
-    /* Kim Kwang-seok Personal Colors as Points */
-    --border-brass: #996633; /* 고동색 */
-    --accent-gold: #435f4e; /* 수박색 */
-    --wood-warm: #996633; /* 고동색 */
+    /* Warm Wood-Tone Vintage Palette */
+    --bg-page: #f3e9d7;
+    --bg-deck: #e5d4b8;
+    --bg-panel: rgba(243, 233, 215, 0.85);
+
+    --border-brass: #8b5c2a;
+    --accent-gold: #b07533;
+    --wood-warm: #8b5c2a;
 
     --text-primary: #4a3728;
-    --text-muted: #8a7968;
-    --text-bright: #2e2118;
+    --text-muted: #8a7060;
+    --text-bright: #2e1c0e;
 
-    --glass-bg: rgba(255, 255, 255, 0.55);
-    --glass-border: rgba(153, 102, 51, 0.18);
-    --glass-shadow: 0 8px 24px 0 rgba(153, 102, 51, 0.10);
+    --glass-bg: rgba(255, 247, 233, 0.60);
+    --glass-border: rgba(176, 117, 51, 0.20);
+    --glass-shadow: 0 8px 24px 0 rgba(176, 117, 51, 0.12);
 
-    --shadow-soft: 0 12px 40px -8px rgba(153, 102, 51, 0.12);
-    --shadow-inset: inset 0 2px 6px 0 rgba(153, 102, 51, 0.08);
+    --shadow-soft: 0 12px 40px -8px rgba(139, 92, 42, 0.15);
+    --shadow-inset: inset 0 2px 6px 0 rgba(139, 92, 42, 0.10);
 
     color-scheme: light;
     font-family: var(--font-sans);
-    background-color: #ffffff;
+    background-color: #faf3e8;
     color: var(--text-primary);
     margin: 0;
     padding: 0;
@@ -46,7 +45,7 @@ html, body {
 }
 
 body {
-    background-color: #ffffff;
+    background-color: #faf3e8;
     min-height: 100vh;
 }
 
@@ -124,7 +123,7 @@ h1, h2, h3, h4 {
 .retro-btn:hover {
     background: var(--accent-gold);
     color: #fff;
-    box-shadow: 0 4px 16px rgba(67, 95, 78, 0.25);
+    box-shadow: 0 4px 16px rgba(176, 117, 51, 0.30);
 }
 
 /* Global Keyframes */

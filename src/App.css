@@ -39,13 +39,13 @@
 }
 
 .site-header.scrolled {
-    background: rgba(253, 252, 250, 0.95);
+    background: rgba(250, 242, 228, 0.95);
     backdrop-filter: blur(12px);
-    border-bottom: 1px solid rgba(160, 128, 96, 0.12);
+    border-bottom: 1px solid rgba(160, 120, 80, 0.15);
     transform: translateY(0);
     opacity: 1;
     pointer-events: auto;
-    box-shadow: 0 4px 24px rgba(80, 50, 20, 0.08);
+    box-shadow: 0 4px 24px rgba(80, 50, 20, 0.10);
 }
 
 .site-logo {
@@ -121,9 +121,9 @@
     left: 0;
     width: 100%;
     height: 700px;
-    background: radial-gradient(circle at 15% 0%, rgba(153, 102, 51, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 85% 5%, rgba(67, 95, 78, 0.06) 0%, transparent 55%),
-                radial-gradient(circle at 50% 20%, rgba(153, 102, 51, 0.04) 0%, transparent 65%);
+    background: radial-gradient(circle at 15% 0%, rgba(176, 117, 51, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 85% 5%, rgba(200, 150, 80, 0.09) 0%, transparent 55%),
+                radial-gradient(circle at 50% 20%, rgba(176, 117, 51, 0.07) 0%, transparent 65%);
     filter: blur(60px);
     pointer-events: none;
     z-index: 0;
@@ -161,7 +161,7 @@
     transform: translateX(-50%);
     width: 100vw;
     height: 250px;
-    background: linear-gradient(to bottom, #ffffff 0%, rgba(255, 255, 255, 0.85) 40%, transparent 100%);
+    background: linear-gradient(to bottom, #faf3e8 0%, rgba(250, 243, 232, 0.85) 40%, transparent 100%);
     pointer-events: none;
     z-index: -1;
 }
@@ -367,12 +367,12 @@
 .media-modal-content {
     width: 480px;
     max-width: 90%;
-    background: #fff;
+    background: #fdf6e8;
     border-radius: 16px;
     padding: 40px;
     position: relative;
     text-align: center;
-    box-shadow: 0 24px 60px rgba(30, 20, 10, 0.25);
+    box-shadow: 0 24px 60px rgba(80, 40, 10, 0.28);
 }
 
 .modal-close {
@@ -439,10 +439,10 @@
 }
 
 .media-option-card:hover {
-    background: #fff;
+    background: #fdf6e8;
     border-color: var(--border-brass);
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(80, 50, 20, 0.10);
+    box-shadow: 0 8px 20px rgba(80, 50, 20, 0.12);
 }
 
 .media-icon-box {
@@ -452,9 +452,9 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background: #fff;
+    background: #fdf6e8;
     border-radius: 12px;
-    border: 1px solid rgba(160, 128, 96, 0.12);
+    border: 1px solid rgba(160, 120, 80, 0.15);
     flex-shrink: 0;
 }
 
@@ -807,6 +807,10 @@
     padding: 28px;
     box-shadow: 0 12px 40px rgba(80, 50, 20, 0.10);
     position: relative;
+    min-width: 360px;
+    max-width: 500px;
+    width: 100%;
+    margin: 0 auto;
 }
 
 .deck-header {
@@ -1168,12 +1172,12 @@
 
 /* Track Selector Widget */
 .track-selector-widget {
-    background: #fff;
-    border: 1px solid rgba(160, 128, 96, 0.12);
+    background: #fdf6e8;
+    border: 1px solid rgba(160, 120, 80, 0.15);
     border-radius: 12px;
     padding: 18px;
     margin-top: 20px;
-    box-shadow: 0 4px 16px rgba(80, 50, 20, 0.06);
+    box-shadow: 0 4px 16px rgba(80, 50, 20, 0.08);
 }
 
 .track-selector-widget h3 {
@@ -1206,15 +1210,15 @@
 }
 
 .track-badge-btn:hover {
-    background: #fff;
+    background: #fdf6e8;
     border-color: var(--border-brass);
 }
 
 .track-badge-btn.active {
-    background: #fff;
+    background: #fdf6e8;
     border-color: var(--border-brass);
     color: var(--accent-gold);
-    box-shadow: 0 2px 8px rgba(80, 50, 20, 0.08);
+    box-shadow: 0 2px 8px rgba(80, 50, 20, 0.10);
 }
 
 .badge-num {
@@ -1572,8 +1576,8 @@
 
 .radio-toggle-group {
     display: flex;
-    background: #fff;
-    border: 1px solid rgba(160, 128, 96, 0.18);
+    background: #f8f0e0;
+    border: 1px solid rgba(160, 120, 80, 0.20);
     border-radius: 6px;
     padding: 2px;
 }
@@ -1711,8 +1715,8 @@
 }
 
 .stylus-instruction-box {
-    background: #fff;
-    border: 1px solid rgba(160, 128, 96, 0.12);
+    background: #fdf6e8;
+    border: 1px solid rgba(160, 120, 80, 0.15);
     border-radius: 12px;
     padding: 16px;
     margin-top: 20px;
@@ -1720,15 +1724,15 @@
     font-size: 13px;
     line-height: 1.6;
     color: var(--text-muted);
-    box-shadow: 0 4px 16px rgba(80, 50, 20, 0.06);
+    box-shadow: 0 4px 16px rgba(80, 50, 20, 0.08);
 }
 
 /* ------------------------------------------------
    FOOTER
    ------------------------------------------------ */
 .site-footer {
-    border-top: 1px solid rgba(160, 128, 96, 0.12);
-    background: #fff;
+    border-top: 1px solid rgba(160, 120, 80, 0.15);
+    background: #f5eada;
     padding: 28px 20px;
     text-align: center;
     position: relative;
@@ -1839,6 +1843,11 @@
     .cassette-deck-outer,
     .turntable-deck-outer {
         padding: 16px;
+    }
+
+    .cassette-deck-outer {
+        min-width: 300px;
+        max-width: 400px;
     }
     .turntable-deck-outer {
         zoom: 1;
