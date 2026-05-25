@@ -283,18 +283,24 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const selectMedia = (media: "lp" | "cassette" | null) => { setActiveMedia(media); };
   
   const play = () => {
-    if (playerRef.current) {
-      if ((playerStatus === "UNSTARTED" || playerStatus === "CUED") && currentTrack) {
-        const targetTime = currentTimeRef.current || currentTrack.startTime;
-        playerRef.current.loadVideoById({
-          videoId: currentTrack.youtubeId,
-          startSeconds: targetTime
-        });
-        setPlayerStatus("BUFFERING");
-      } else if (typeof playerRef.current.playVideo === "function") {
-        playerRef.current.playVideo();
-      }
+    if (!playerRef.current || !currentTrack) return;
+    const ytState = typeof playerRef.current.getPlayerState === "function"
+      ? playerRef.current.getPlayerState()
+      : -1;
+    const currentVid = typeof playerRef.current.getVideoData === "function"
+      ? playerRef.current.getVideoData()?.video_id
+      : null;
+    // YT 플레이어에 올바른 영상이 이미 로드되어 있으면(예: setSide의 seekTo로 위치까지 이동된 경우)
+    // loadVideoById는 startSeconds를 무시할 수 있으므로 단순히 playVideo로 재개
+    if (ytState !== -1 && currentVid === currentTrack.youtubeId) {
+      playerRef.current.playVideo();
+    } else {
+      playerRef.current.loadVideoById({
+        videoId: currentTrack.youtubeId,
+        startSeconds: currentTimeRef.current || currentTrack.startTime
+      });
     }
+    setPlayerStatus("BUFFERING");
   };
   const pause = () => { if (playerRef.current && typeof playerRef.current.pauseVideo === "function") playerRef.current.pauseVideo(); };
   const stop = () => { if (playerRef.current && typeof playerRef.current.stopVideo === "function") { playerRef.current.stopVideo(); setPlayerStatus("UNSTARTED"); } };
@@ -352,6 +358,20 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setCurrentSide(side);
       setCurrentTrackIndex(newIndex);
       setCurrentTime(newTime);
+      currentTimeRef.current = newTime;
+      currentSideRef.current = side;
+
+      // useEffect([currentTrack])가 BUFFERING 상태를 보고 currentTrack.startTime으로
+      // 재seek하지 못하도록 차단한 뒤, YT 플레이어를 직접 mirror 위치로 이동
+      preventAutoPlayRef.current = true;
+      if (playerRef.current && typeof playerRef.current.seekTo === "function") {
+        const ytState = typeof playerRef.current.getPlayerState === "function"
+          ? playerRef.current.getPlayerState()
+          : -1;
+        if (ytState !== -1 && ytState !== 5) {
+          playerRef.current.seekTo(newTime, true);
+        }
+      }
     } else {
       // LP resets to start
       setCurrentSide(side); setCurrentTrackIndex(0);
