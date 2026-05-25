@@ -539,51 +539,27 @@
 .player-bg-orb {
     position: absolute;
     border-radius: 50%;
-    background: radial-gradient(circle at center, var(--orb-color, #435f4e) 0%, transparent 65%);
-    filter: blur(90px);
-    opacity: 0.28;
-    animation: orbFloat 14s ease-in-out infinite;
-    transition: opacity 1.5s ease;
+    background: radial-gradient(circle at center, var(--orb-color, #435f4e) 0%, transparent 60%);
+    filter: blur(70px);
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    --ripple-peak: 0.36;
+    animation: rippleExpand 10s linear infinite;
 }
 
-.player-bg-orb--1 {
-    width: 100vw;
-    height: 100vw;
-    top: -35%;
-    left: -20%;
-    animation-delay: 0s;
-}
+.player-bg-orb--1 { animation-delay: 0s; }
+.player-bg-orb--2 { animation-delay: -3.33s; }
+.player-bg-orb--3 { animation-delay: -6.67s; }
 
-.player-bg-orb--2 {
-    width: 75vw;
-    height: 75vw;
-    bottom: -20%;
-    right: -15%;
-    animation-delay: -5s;
-    animation-duration: 11s;
-}
+.player-bg--playing .player-bg-orb         { --ripple-peak: 0.50; }
+.player-bg--playing .player-bg-orb--1 { animation-duration: 7s; animation-delay: 0s; }
+.player-bg--playing .player-bg-orb--2 { animation-duration: 7s; animation-delay: -2.33s; }
+.player-bg--playing .player-bg-orb--3 { animation-duration: 7s; animation-delay: -4.67s; }
 
-.player-bg-orb--3 {
-    width: 60vw;
-    height: 60vw;
-    top: 25%;
-    left: 35%;
-    animation-delay: -9s;
-    animation-duration: 17s;
-}
-
-.player-bg--playing .player-bg-orb {
-    opacity: 0.45;
-}
-
-.player-bg--playing .player-bg-orb--1 { animation-duration: 10s; }
-.player-bg--playing .player-bg-orb--2 { animation-duration: 8s; }
-.player-bg--playing .player-bg-orb--3 { animation-duration: 12s; }
-
-@keyframes orbFloat {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    33%       { transform: translate(4%, 6%) scale(1.06); }
-    66%       { transform: translate(-5%, -3%) scale(0.96); }
+@keyframes rippleExpand {
+    0%   { width: 10vw; height: 10vw; opacity: var(--ripple-peak, 0.36); }
+    100% { width: 160vw; height: 160vw; opacity: 0; }
 }
 
 .player-bg-overlay {
