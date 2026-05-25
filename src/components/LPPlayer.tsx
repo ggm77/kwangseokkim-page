@@ -111,9 +111,7 @@ export const LPPlayer: React.FC = () => {
     };
 
     useEffect(() => {
-        if (window.innerWidth <= 860) {
-            window.scrollTo(0, 0);
-        }
+        window.scrollTo(0, 0);
     }, []);
 
     useEffect(() => {
