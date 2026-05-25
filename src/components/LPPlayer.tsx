@@ -2,9 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useYTPlayer } from "./YTPlayerStore";
 import { AlbumSleeve } from "./AlbumSleeve";
-import { PlayerBackground } from "./PlayerBackground";
-
-
 export const LPPlayer: React.FC = () => {
     const {
         activeAlbum,
@@ -515,12 +512,6 @@ export const LPPlayer: React.FC = () => {
 
     return (
         <div className="player-page lp-page-container">
-            <PlayerBackground
-                youtubeId={activeAlbum.tracksSideA[0].youtubeId}
-                coverColor={activeAlbum.coverColor}
-                accentColor={activeAlbum.accentColor}
-                isPlaying={playerStatus === "PLAYING" || playerStatus === "BUFFERING"}
-            />
             {/* Back to Home & Info Bar */}
             <div className="player-nav-header">
                 <button
