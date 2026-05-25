@@ -1813,6 +1813,10 @@
 /* ------------------------------------------------
    FOOTER
    ------------------------------------------------ */
+.app-container:has(.player-page) .site-footer {
+    display: none;
+}
+
 .site-footer {
     border-top: 1px solid rgba(160, 120, 80, 0.15);
     background: #f5eada;
