@@ -514,14 +514,13 @@ export const LPPlayer: React.FC = () => {
     if (!activeAlbum || !currentTrack) return null;
 
     return (
-        <>
-        <PlayerBackground
-            youtubeId={activeAlbum.tracksSideA[0].youtubeId}
-            coverColor={activeAlbum.coverColor}
-            accentColor={activeAlbum.accentColor}
-            isPlaying={playerStatus === "PLAYING" || playerStatus === "BUFFERING"}
-        />
         <div className="player-page lp-page-container">
+            <PlayerBackground
+                youtubeId={activeAlbum.tracksSideA[0].youtubeId}
+                coverColor={activeAlbum.coverColor}
+                accentColor={activeAlbum.accentColor}
+                isPlaying={playerStatus === "PLAYING" || playerStatus === "BUFFERING"}
+            />
             {/* Back to Home & Info Bar */}
             <div className="player-nav-header">
                 <button
@@ -743,6 +742,5 @@ export const LPPlayer: React.FC = () => {
                 </div>
             </div>
         </div>
-        </>
     );
 };
