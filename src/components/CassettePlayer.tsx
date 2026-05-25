@@ -292,13 +292,14 @@ export const CassettePlayer: React.FC = () => {
     };
 
     return (
+        <>
+        <PlayerBackground
+            youtubeId={activeAlbum.tracksSideA[0].youtubeId}
+            coverColor={activeAlbum.coverColor}
+            accentColor={activeAlbum.accentColor}
+            isPlaying={playerStatus === "PLAYING" || playerStatus === "BUFFERING"}
+        />
         <div className="player-page cassette-page-container">
-            <PlayerBackground
-                youtubeId={activeAlbum.tracksSideA[0].youtubeId}
-                coverColor={activeAlbum.coverColor}
-                accentColor={activeAlbum.accentColor}
-                isPlaying={playerStatus === "PLAYING" || playerStatus === "BUFFERING"}
-            />
             {/* Nav Header */}
             <div className="player-nav-header">
                 <button className="back-btn retro-btn" onClick={() => {
@@ -431,5 +432,6 @@ export const CassettePlayer: React.FC = () => {
                 </div>
             </div>
         </div>
+        </>
     );
 };
