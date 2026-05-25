@@ -303,12 +303,18 @@ export const CassettePlayer: React.FC = () => {
                     </div>
                     <button className="fullscreen-btn retro-btn" onClick={toggleFullscreen} title={isFullscreen ? "전체 화면 종료" : "전체 화면"}>
                         {isFullscreen ? (
-                            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M5.5 0a.5.5 0 0 1 .5.5v4A.5.5 0 0 1 5.5 5h-4a.5.5 0 0 1 0-1H5V.5a.5.5 0 0 1 .5-.5zm5 0a.5.5 0 0 1 .5.5V4h3.5a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5v-4a.5.5 0 0 1 .5-.5zM0 10.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-1 0V11H.5a.5.5 0 0 1-.5-.5zm10 0a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1H11v3.5a.5.5 0 0 1-1 0v-4z"/>
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
+                                <polyline points="5,1 5,5 1,5" />
+                                <polyline points="11,1 11,5 15,5" />
+                                <polyline points="5,15 5,11 1,11" />
+                                <polyline points="11,15 11,11 15,11" />
                             </svg>
                         ) : (
-                            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                                <path d="M1.5 1h4a.5.5 0 0 1 0 1H2.5v3a.5.5 0 0 1-1 0V1.5A.5.5 0 0 1 1.5 1zm9 0a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-1 0V2.5h-3a.5.5 0 0 1 0-1h3.5zM1.5 11a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1H1.5A.5.5 0 0 1 1 14.5v-3a.5.5 0 0 1 .5-.5zm13 0a.5.5 0 0 1 .5.5v3.5a.5.5 0 0 1-.5.5H11a.5.5 0 0 1 0-1h3v-3a.5.5 0 0 1 .5-.5z"/>
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
+                                <polyline points="1,5 1,1 5,1" />
+                                <polyline points="15,5 15,1 11,1" />
+                                <polyline points="1,11 1,15 5,15" />
+                                <polyline points="15,11 15,15 11,15" />
                             </svg>
                         )}
                     </button>
