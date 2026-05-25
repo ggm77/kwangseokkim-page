@@ -10,6 +10,8 @@ lerna-debug.log*
 design/
 kks.md
 
+CLAUDE.md
+
 node_modules
 dist
 dist-ssr
