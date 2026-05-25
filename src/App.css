@@ -1447,7 +1447,7 @@
 /* Tonearm */
 .tonearm-assembly {
     position: absolute;
-    top: -52px;
+    top: -38px;
     left: 313px;
     width: 175px;
     height: 313px;
@@ -1889,6 +1889,7 @@
     }
 
     .tonearm-assembly {
+        top: -28px;
         left: 227px;
         width: 131px;
         height: 234px;
