@@ -25,13 +25,13 @@ export const AlbumCarousel: React.FC = () => {
         <div className="home-section">
             {/* Hero Title Area — matching design/home.png */}
             <div className="home-hero">
-                <p className="hero-subtitle">THE ANALOG COLLECTION</p>
+                <p className="hero-subtitle">ALBUM BY ALBUM</p>
                 <h1 className="hero-title">다시 부르기 : 아날로그 김광석</h1>
                 <p className="hero-desc">
-                    마우스 클릭 한 번으로 다음 곡을 넘어갈 수 없는 곳.<br />
-                    원하는 곡을 듣기 위해선 꾹 누른 채 기다려야 하는 곳.<br /><br />
-                    조금은 느리고 불편하지만,<br />
-                    음악을 가장 깊게 소유하는 방법을 제안합니다.
+                    앨범 한 장 한 장에는<br />
+                    그 시절 김광석의 목소리가 고스란히 담겨 있습니다.<br /><br />
+                    처음 트랙부터 마지막 트랙까지—<br />
+                    앨범 그대로, 음악 그대로 들어보세요.
                 </p>
             </div>
 
