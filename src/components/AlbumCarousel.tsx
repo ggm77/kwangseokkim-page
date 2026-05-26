@@ -26,7 +26,7 @@ export const AlbumCarousel: React.FC = () => {
             {/* Hero Title Area — matching design/home.png */}
             <div className="home-hero">
                 <p className="hero-subtitle">THE ANALOG COLLECTION</p>
-                <h1 className="hero-title">다시 부르기 : 아날로그</h1>
+                <h1 className="hero-title">다시 부르기 : 아날로그 김광석</h1>
                 <p className="hero-desc">
                     마우스 클릭 한 번으로 다음 곡을 넘어갈 수 없는 곳.<br />
                     원하는 곡을 듣기 위해선 꾹 누른 채 기다려야 하는 곳.<br /><br />
