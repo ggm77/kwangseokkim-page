@@ -297,15 +297,16 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const isCorrectVideo = currentVid === currentTrack.youtubeId || !currentVid;
     const expectedTime = currentTimeRef.current || currentTrack.startTime;
 
-    if (ytState !== -1 && isCorrectVideo) {
-      const playerTime = typeof playerRef.current.getCurrentTime === "function"
-        ? playerRef.current.getCurrentTime()
-        : null;
-      if (playerTime !== null && Math.abs(playerTime - expectedTime) > 2) {
-        playerRef.current.seekTo(expectedTime, true);
-      }
+    const playerTime = typeof playerRef.current.getCurrentTime === "function"
+      ? playerRef.current.getCurrentTime()
+      : null;
+    const isAtCorrectPosition = playerTime !== null && Math.abs(playerTime - expectedTime) <= 2;
+
+    if (ytState !== -1 && isCorrectVideo && isAtCorrectPosition) {
+      // Player is already at the right position — simple resume
       playerRef.current.playVideo();
     } else {
+      // Need to seek (e.g. after flip) — loadVideoById is a single atomic seek+play
       playerRef.current.loadVideoById({
         videoId: currentTrack.youtubeId,
         startSeconds: expectedTime
