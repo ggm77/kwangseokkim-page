@@ -286,14 +286,12 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const play = () => {
     if (!playerRef.current || !currentTrack) return;
 
-    // After a side flip, pendingSeekRef holds the mirror position.
-    // Player is PAUSED (handleEject called pause() before flip), so seekTo+playVideo
-    // avoids loadVideoById's double UNSTARTED event that causes BUFFERING to get stuck.
+    // After a side flip, pendingSeekRef holds the mirror position. Use it and force
+    // loadVideoById so the player always lands at the correct tape position.
     if (pendingSeekRef.current !== null) {
       const seekTime = pendingSeekRef.current;
       pendingSeekRef.current = null;
-      playerRef.current.seekTo(seekTime, true);
-      playerRef.current.playVideo();
+      playerRef.current.loadVideoById({ videoId: currentTrack.youtubeId, startSeconds: seekTime });
       setPlayerStatus("BUFFERING");
       return;
     }
