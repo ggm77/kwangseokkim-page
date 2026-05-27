@@ -295,13 +295,20 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // If it returns a string, we check if it matches. If it's falsy, we assume it matches
     // because we haven't actively loaded a different video yet.
     const isCorrectVideo = currentVid === currentTrack.youtubeId || !currentVid;
-        
+    const expectedTime = currentTimeRef.current || currentTrack.startTime;
+
     if (ytState !== -1 && isCorrectVideo) {
+      const playerTime = typeof playerRef.current.getCurrentTime === "function"
+        ? playerRef.current.getCurrentTime()
+        : null;
+      if (playerTime !== null && Math.abs(playerTime - expectedTime) > 2) {
+        playerRef.current.seekTo(expectedTime, true);
+      }
       playerRef.current.playVideo();
     } else {
       playerRef.current.loadVideoById({
         videoId: currentTrack.youtubeId,
-        startSeconds: currentTimeRef.current || currentTrack.startTime
+        startSeconds: expectedTime
       });
     }
     setPlayerStatus("BUFFERING");
