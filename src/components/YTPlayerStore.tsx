@@ -299,37 +299,14 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     if (pendingSeekRef.current !== null) {
       const seekTime = pendingSeekRef.current;
       pendingSeekRef.current = null;
-
-      const currentVid = typeof playerRef.current.getVideoData === "function"
-        ? playerRef.current.getVideoData()?.video_id
-        : null;
-
-      if (currentVid === trackToPlay.youtubeId) {
-        // Same video loaded. Play first, then seek to ensure YouTube API doesn't drop the command.
-        if (playerRef.current && typeof playerRef.current.playVideo === "function") {
-            playerRef.current.playVideo();
-        }
-        playerRef.current.seekTo(seekTime, true);
-      } else {
-        playerRef.current.loadVideoById({ videoId: trackToPlay.youtubeId, startSeconds: seekTime });
-      }
+      // loadVideoById works in all player states (UNSTARTED, PAUSED, PLAYING, ENDED)
+      playerRef.current.loadVideoById({ videoId: trackToPlay.youtubeId, startSeconds: seekTime });
       setPlayerStatus("BUFFERING");
       return;
     }
 
-    const currentVid = typeof playerRef.current.getVideoData === "function"
-      ? playerRef.current.getVideoData()?.video_id
-      : null;
     const expectedTime = currentTimeRef.current || trackToPlay.startTime;
-
-    if (currentVid === trackToPlay.youtubeId) {
-        if (typeof playerRef.current.playVideo === "function") {
-            playerRef.current.playVideo();
-        }
-        playerRef.current.seekTo(expectedTime, true);
-    } else {
-        playerRef.current.loadVideoById({ videoId: trackToPlay.youtubeId, startSeconds: expectedTime });
-    }
+    playerRef.current.loadVideoById({ videoId: trackToPlay.youtubeId, startSeconds: expectedTime });
     setPlayerStatus("BUFFERING");
   };
   const pause = () => { 
