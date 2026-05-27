@@ -160,7 +160,8 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             else if (state === window.YT.PlayerState.BUFFERING) statusStr = "BUFFERING";
             else if (state === window.YT.PlayerState.ENDED) statusStr = "ENDED";
             else if (state === window.YT.PlayerState.CUED) statusStr = "CUED";
-            
+
+            console.log(`[YT] onStateChange: ${state} → ${statusStr}, preventAutoPlay=${preventAutoPlayRef.current}`);
             setPlayerStatus(statusStr);
             if (state === window.YT.PlayerState.PLAYING) {
               setDuration(event.target.getDuration() || stateRef.current.currentTrack?.duration || 0);
@@ -182,6 +183,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Sync track changes if done from next/prev/side change
   useEffect(() => {
     // Only react to currentTrack changes if player is ready
+    console.log(`[Effect:currentTrack] fired. playerStatus(closure)=${playerStatus}, preventAutoPlay=${preventAutoPlayRef.current}, track=${currentTrack?.title}`);
     if (playerRef.current && typeof playerRef.current.loadVideoById === "function") {
        if (currentTrack && activeMedia) {
          // If it was playing or just ended (auto-advance), load and play
@@ -302,11 +304,15 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       : null;
     const isAtCorrectPosition = playerTime !== null && Math.abs(playerTime - expectedTime) <= 2;
 
+    console.log(`[play] ytState=${ytState}, isCorrectVideo=${isCorrectVideo}, playerTime=${playerTime?.toFixed(1)}, expectedTime=${expectedTime.toFixed(1)}, isAtCorrectPosition=${isAtCorrectPosition}`);
+
     if (ytState !== -1 && isCorrectVideo && isAtCorrectPosition) {
       // Player is already at the right position — simple resume
+      console.log('[play] → playVideo()');
       playerRef.current.playVideo();
     } else {
       // Need to seek (e.g. after flip) — loadVideoById is a single atomic seek+play
+      console.log('[play] → loadVideoById', { videoId: currentTrack.youtubeId, startSeconds: expectedTime });
       playerRef.current.loadVideoById({
         videoId: currentTrack.youtubeId,
         startSeconds: expectedTime
@@ -376,6 +382,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // seekTo를 여기서 직접 호출하면 YT가 BUFFERING 이벤트를 발생시켜 재생 버튼이
       // 비활성화(pressed+disabled)되는 버그 유발. play() 호출 시 position mismatch를
       // 감지하여 seekTo+playVideo를 실행하므로 여기서는 자동 재생 차단만 한다.
+      console.log(`[setSide] side=${side}, newTime=${newTime.toFixed(1)}, newIndex=${newIndex}, preventAutoPlay→true`);
       preventAutoPlayRef.current = true;
     } else {
       // LP resets to start
