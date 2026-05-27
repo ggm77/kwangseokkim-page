@@ -186,10 +186,16 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // Only react to currentTrack changes if player is ready
     if (playerRef.current && typeof playerRef.current.loadVideoById === "function") {
        if (currentTrack && activeMedia) {
-         // Side flip in progress — setSide already called loadVideoById. Don't touch the player here.
+         // Side flip in progress — load and play at the mirror position stored by setSide().
          if (sideFlipRef.current) {
            sideFlipRef.current = false;
            preventAutoPlayRef.current = false;
+           if (pendingSeekRef.current !== null) {
+             const seekTime = pendingSeekRef.current;
+             pendingSeekRef.current = null;
+             playerRef.current.loadVideoById({ videoId: currentTrack.youtubeId, startSeconds: seekTime });
+             setPlayerStatus("BUFFERING");
+           }
            return;
          }
 

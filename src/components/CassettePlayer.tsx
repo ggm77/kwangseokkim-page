@@ -207,11 +207,9 @@ export const CassettePlayer: React.FC = () => {
         // Start CSS rotation immediately
         setIsFlipped(nextSide === "B");
 
-        // pause() first puts YouTube into PAUSED state, making loadVideoById in play() reliably trigger auto-play
         pause();
         setSide(nextSide);
         setPlayIntent(true);
-        play();
 
         // After flip animation completes, unlock UI
         setTimeout(() => {
