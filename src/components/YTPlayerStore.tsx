@@ -74,6 +74,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const preventAutoPlayRef = useRef<boolean>(false);
   const currentTimeRef = useRef<number>(0);
   const currentSideRef = useRef<"A" | "B">("A");
+  const pendingSeekRef = useRef<number | null>(null);
   const iframeContainerId = "yt-global-player";
   
   const tracks = activeAlbum ? (currentSide === "A" ? activeAlbum.tracksSideA : activeAlbum.tracksSideB) : [];
@@ -161,7 +162,6 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             else if (state === window.YT.PlayerState.ENDED) statusStr = "ENDED";
             else if (state === window.YT.PlayerState.CUED) statusStr = "CUED";
 
-            console.log(`[YT] onStateChange: ${state} → ${statusStr}, preventAutoPlay=${preventAutoPlayRef.current}`);
             setPlayerStatus(statusStr);
             if (state === window.YT.PlayerState.PLAYING) {
               setDuration(event.target.getDuration() || stateRef.current.currentTrack?.duration || 0);
@@ -183,7 +183,6 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Sync track changes if done from next/prev/side change
   useEffect(() => {
     // Only react to currentTrack changes if player is ready
-    console.log(`[Effect:currentTrack] fired. playerStatus(closure)=${playerStatus}, preventAutoPlay=${preventAutoPlayRef.current}, track=${currentTrack?.title}`);
     if (playerRef.current && typeof playerRef.current.loadVideoById === "function") {
        if (currentTrack && activeMedia) {
          // If it was playing or just ended (auto-advance), load and play
@@ -286,37 +285,34 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   
   const play = () => {
     if (!playerRef.current || !currentTrack) return;
+
+    // After a side flip, pendingSeekRef holds the mirror position. Use it and force
+    // loadVideoById so the player always lands at the correct tape position.
+    if (pendingSeekRef.current !== null) {
+      const seekTime = pendingSeekRef.current;
+      pendingSeekRef.current = null;
+      playerRef.current.loadVideoById({ videoId: currentTrack.youtubeId, startSeconds: seekTime });
+      setPlayerStatus("BUFFERING");
+      return;
+    }
+
     const ytState = typeof playerRef.current.getPlayerState === "function"
       ? playerRef.current.getPlayerState()
       : -1;
     const currentVid = typeof playerRef.current.getVideoData === "function"
       ? playerRef.current.getVideoData()?.video_id
       : null;
-      
-    // getVideoData() might return null/empty when the player is paused for a while.
-    // If it returns a string, we check if it matches. If it's falsy, we assume it matches
-    // because we haven't actively loaded a different video yet.
     const isCorrectVideo = currentVid === currentTrack.youtubeId || !currentVid;
     const expectedTime = currentTimeRef.current || currentTrack.startTime;
-
     const playerTime = typeof playerRef.current.getCurrentTime === "function"
       ? playerRef.current.getCurrentTime()
       : null;
     const isAtCorrectPosition = playerTime !== null && Math.abs(playerTime - expectedTime) <= 2;
 
-    console.log(`[play] ytState=${ytState}, isCorrectVideo=${isCorrectVideo}, playerTime=${playerTime?.toFixed(1)}, expectedTime=${expectedTime.toFixed(1)}, isAtCorrectPosition=${isAtCorrectPosition}`);
-
     if (ytState !== -1 && isCorrectVideo && isAtCorrectPosition) {
-      // Player is already at the right position — simple resume
-      console.log('[play] → playVideo()');
       playerRef.current.playVideo();
     } else {
-      // Need to seek (e.g. after flip) — loadVideoById is a single atomic seek+play
-      console.log('[play] → loadVideoById', { videoId: currentTrack.youtubeId, startSeconds: expectedTime });
-      playerRef.current.loadVideoById({
-        videoId: currentTrack.youtubeId,
-        startSeconds: expectedTime
-      });
+      playerRef.current.loadVideoById({ videoId: currentTrack.youtubeId, startSeconds: expectedTime });
     }
     setPlayerStatus("BUFFERING");
   };
@@ -378,11 +374,9 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setCurrentTime(newTime);
       currentTimeRef.current = newTime;
       currentSideRef.current = side;
-
-      // seekTo를 여기서 직접 호출하면 YT가 BUFFERING 이벤트를 발생시켜 재생 버튼이
-      // 비활성화(pressed+disabled)되는 버그 유발. play() 호출 시 position mismatch를
-      // 감지하여 seekTo+playVideo를 실행하므로 여기서는 자동 재생 차단만 한다.
-      console.log(`[setSide] side=${side}, newTime=${newTime.toFixed(1)}, newIndex=${newIndex}, preventAutoPlay→true`);
+      // Store mirror position so play() can force-seek to it regardless of player state.
+      // Calling seekTo() here directly would trigger a YT BUFFERING event that breaks the play button.
+      pendingSeekRef.current = newTime;
       preventAutoPlayRef.current = true;
     } else {
       // LP resets to start
