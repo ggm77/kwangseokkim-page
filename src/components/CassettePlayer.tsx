@@ -207,7 +207,8 @@ export const CassettePlayer: React.FC = () => {
         // Start CSS rotation immediately
         setIsFlipped(nextSide === "B");
 
-        // Immediately switch side and play at mirror position — must be in same user gesture
+        // pause() first puts YouTube into PAUSED state, making loadVideoById in play() reliably trigger auto-play
+        pause();
         setSide(nextSide);
         setPlayIntent(true);
         play();
