@@ -190,6 +190,7 @@
 }
 
 .hero-desc {
+    font-family: var(--font-serif);
     font-size: 15px;
     color: var(--text-muted);
     max-width: 520px;
