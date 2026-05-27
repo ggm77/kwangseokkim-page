@@ -372,17 +372,10 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       currentTimeRef.current = newTime;
       currentSideRef.current = side;
 
-      // useEffect([currentTrack])가 BUFFERING 상태를 보고 currentTrack.startTime으로
-      // 재seek하지 못하도록 차단한 뒤, YT 플레이어를 직접 mirror 위치로 이동
+      // seekTo를 여기서 직접 호출하면 YT가 BUFFERING 이벤트를 발생시켜 재생 버튼이
+      // 비활성화(pressed+disabled)되는 버그 유발. play() 호출 시 position mismatch를
+      // 감지하여 seekTo+playVideo를 실행하므로 여기서는 자동 재생 차단만 한다.
       preventAutoPlayRef.current = true;
-      if (playerRef.current && typeof playerRef.current.seekTo === "function") {
-        const ytState = typeof playerRef.current.getPlayerState === "function"
-          ? playerRef.current.getPlayerState()
-          : -1;
-        if (ytState !== -1 && ytState !== 5) {
-          playerRef.current.seekTo(newTime, true);
-        }
-      }
     } else {
       // LP resets to start
       setCurrentSide(side); setCurrentTrackIndex(0);
