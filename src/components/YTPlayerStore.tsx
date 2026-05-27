@@ -72,6 +72,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const playerRef = useRef<any>(null);
   const timeUpdateInterval = useRef<number | null>(null);
   const preventAutoPlayRef = useRef<boolean>(false);
+  const sideFlipRef = useRef<boolean>(false);
   const currentTimeRef = useRef<number>(0);
   const currentSideRef = useRef<"A" | "B">("A");
   const pendingSeekRef = useRef<number | null>(null);
@@ -185,6 +186,15 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // Only react to currentTrack changes if player is ready
     if (playerRef.current && typeof playerRef.current.loadVideoById === "function") {
        if (currentTrack && activeMedia) {
+         // Side flip in progress — do NOT touch the player here. The mirror position
+         // is stored in pendingSeekRef and will be used when play() is called at 1200ms.
+         if (sideFlipRef.current) {
+           sideFlipRef.current = false;
+           preventAutoPlayRef.current = false;
+           setPlayerStatus("UNSTARTED");
+           return;
+         }
+
          // If it was playing or just ended (auto-advance), load and play
          if (!preventAutoPlayRef.current && (playerStatus === "PLAYING" || playerStatus === "ENDED" || playerStatus === "BUFFERING")) {
            const currentVid = typeof playerRef.current.getVideoData === 'function' ? playerRef.current.getVideoData().video_id : null;
@@ -284,14 +294,29 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const selectMedia = (media: "lp" | "cassette" | null) => { setActiveMedia(media); };
   
   const play = () => {
-    if (!playerRef.current || !currentTrack) return;
+    // Read from stateRef to completely avoid stale closures in setTimeout callbacks
+    const trackToPlay = stateRef.current.currentTrack;
+    if (!playerRef.current || !trackToPlay) return;
 
-    // After a side flip, pendingSeekRef holds the mirror position. Use it and force
-    // loadVideoById so the player always lands at the correct tape position.
     if (pendingSeekRef.current !== null) {
       const seekTime = pendingSeekRef.current;
       pendingSeekRef.current = null;
-      playerRef.current.loadVideoById({ videoId: currentTrack.youtubeId, startSeconds: seekTime });
+
+      const currentVid = typeof playerRef.current.getVideoData === "function"
+        ? playerRef.current.getVideoData()?.video_id
+        : null;
+
+      if (currentVid === trackToPlay.youtubeId) {
+        // Same video loaded. Seek, then slightly delay play to ensure API consistency.
+        playerRef.current.seekTo(seekTime, true);
+        setTimeout(() => {
+            if (playerRef.current && typeof playerRef.current.playVideo === "function") {
+                playerRef.current.playVideo();
+            }
+        }, 100);
+      } else {
+        playerRef.current.loadVideoById({ videoId: trackToPlay.youtubeId, startSeconds: seekTime });
+      }
       setPlayerStatus("BUFFERING");
       return;
     }
@@ -332,10 +357,16 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
   const setSide = (side: "A" | "B") => {
-    if (activeMedia === "cassette" && activeAlbum) {
-      // Simulate physical tape flipping
-      const sideA = activeAlbum.tracksSideA;
-      const sideB = activeAlbum.tracksSideB;
+    if (side === currentSideRef.current) return;
+    
+    // Always use stateRef to avoid any potential stale closure bugs in this handler
+    const safeActiveAlbum = stateRef.current.activeAlbum;
+    const safeActiveMedia = stateRef.current.activeMedia;
+
+    if (safeActiveAlbum && safeActiveMedia === "cassette") {
+      // Simulate physical tape flipping — mirror the tape position
+      const sideA = safeActiveAlbum.tracksSideA;
+      const sideB = safeActiveAlbum.tracksSideB;
       
       const startA = sideA[0].startTime;
       const endA = sideA[sideA.length - 1].startTime + sideA[sideA.length - 1].duration;
@@ -369,19 +400,22 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           }
       }
       
+      // Mark this as a side-flip so the currentTrack useEffect won't touch the player
+      sideFlipRef.current = true;
+      preventAutoPlayRef.current = true;
+      // Store mirror position so play() can seek to it
+      pendingSeekRef.current = newTime;
+      
+      // Update all state together (React batches these)
       setCurrentSide(side);
       setCurrentTrackIndex(newIndex);
       setCurrentTime(newTime);
       currentTimeRef.current = newTime;
       currentSideRef.current = side;
-      // Store mirror position so play() can force-seek to it regardless of player state.
-      // Calling seekTo() here directly would trigger a YT BUFFERING event that breaks the play button.
-      pendingSeekRef.current = newTime;
-      preventAutoPlayRef.current = true;
     } else {
       // LP resets to start
       setCurrentSide(side); setCurrentTrackIndex(0);
-      if (activeAlbum) { const newTracks = side === "A" ? activeAlbum.tracksSideA : activeAlbum.tracksSideB; setCurrentTime(newTracks[0]?.startTime || 0); }
+      if (safeActiveAlbum) { const newTracks = side === "A" ? safeActiveAlbum.tracksSideA : safeActiveAlbum.tracksSideB; setCurrentTime(newTracks[0]?.startTime || 0); }
       else setCurrentTime(0);
     }
   };

@@ -14,14 +14,16 @@ export const CassettePlayer: React.FC = () => {
         pause,
         seekTo,
         setSide,
-        resetPlayer
+        resetPlayer,
+        selectMedia
     } = useYTPlayer();
     
     const navigate = useNavigate();
 
     useEffect(() => {
         window.scrollTo(0, 0);
-    }, []);
+        selectMedia("cassette");
+    }, [selectMedia]);
 
     useEffect(() => {
         if (!activeAlbum || !currentTrack) {
@@ -36,6 +38,10 @@ export const CassettePlayer: React.FC = () => {
     const [isREW, setIsREW] = useState<boolean>(false);
     const [playIntent, setPlayIntent] = useState<boolean>(false);
     const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth <= 860);
+
+    // Keep a ref to the latest play function so setTimeout always calls the current version
+    const playRef = useRef(play);
+    useEffect(() => { playRef.current = play; }, [play]);
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 860);
@@ -192,7 +198,7 @@ export const CassettePlayer: React.FC = () => {
         };
     }, [playerStatus, play, pause, startFF, startREW, stopSearch]);
 
-    // Natural 180-degree flip animation
+    // Auto-reverse: flip the tape and always resume playback at mirror position
     const handleEject = () => {
         if (isEjecting) return;
         setIsEjecting(true);
@@ -202,14 +208,17 @@ export const CassettePlayer: React.FC = () => {
         // Start CSS rotation immediately
         setIsFlipped(nextSide === "B");
 
-        // Change text/side halfway through the flip when the tape is edge-on
+        // Change side halfway through the flip when the tape is edge-on.
+        // setSide() calculates mirror position and updates pendingSeekRef.
         setTimeout(() => {
             setSide(nextSide);
         }, 600);
 
-        // Unlock after flip completes
+        // After flip animation completes, unlock UI and auto-play at mirror position
         setTimeout(() => {
             setIsEjecting(false);
+            setPlayIntent(true);
+            playRef.current();
         }, 1200);
     };
 

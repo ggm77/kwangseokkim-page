@@ -15,9 +15,21 @@ export const LPPlayer: React.FC = () => {
         seekTo,
         setSide,
         resetPlayer,
+        selectMedia
     } = useYTPlayer();
 
     const navigate = useNavigate();
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+        selectMedia("lp");
+    }, [selectMedia]);
+
+    useEffect(() => {
+        if (!activeAlbum || !currentTrack) {
+            navigate("/");
+        }
+    }, [activeAlbum, currentTrack, navigate]);
 
     const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
     const [viewSide, setViewSide] = useState<"A" | "B">(currentSide);
