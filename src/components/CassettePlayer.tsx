@@ -423,7 +423,7 @@ export const CassettePlayer: React.FC = () => {
                                 onClick={handleEject}
                                 disabled={isEjecting}
                             >
-                                <div className="btn-cap"><span className="icon">&#9167;</span><span className="label">FLIP</span></div>
+                                <div className="btn-cap"><span className="icon">&#8644;</span><span className="label">REVERSE</span></div>
                             </button>
                         </div>
                     </div>
