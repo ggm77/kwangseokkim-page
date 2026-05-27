@@ -399,12 +399,8 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Mark this as a side-flip so the currentTrack useEffect won't touch the player
       sideFlipRef.current = true;
       preventAutoPlayRef.current = true;
-      
-      if (playerRef.current) {
-        const newTrack = newTracks[newIndex];
-        playerRef.current.loadVideoById({ videoId: newTrack.youtubeId, startSeconds: newTime });
-        setPlayerStatus("BUFFERING");
-      }
+      // Store mirror position — play() will use this via pendingSeekRef
+      pendingSeekRef.current = newTime;
       
       // Update all state together (React batches these)
       setCurrentSide(side);

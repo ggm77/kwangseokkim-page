@@ -207,9 +207,10 @@ export const CassettePlayer: React.FC = () => {
         // Start CSS rotation immediately
         setIsFlipped(nextSide === "B");
 
-        // Immediately switch side and trigger play to retain user gesture
+        // Immediately switch side and play at mirror position — must be in same user gesture
         setSide(nextSide);
         setPlayIntent(true);
+        play();
 
         // After flip animation completes, unlock UI
         setTimeout(() => {
