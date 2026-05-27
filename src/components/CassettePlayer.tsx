@@ -202,23 +202,18 @@ export const CassettePlayer: React.FC = () => {
     const handleEject = () => {
         if (isEjecting) return;
         setIsEjecting(true);
-        pause();
 
         const nextSide = currentSide === "A" ? "B" : "A";
         // Start CSS rotation immediately
         setIsFlipped(nextSide === "B");
 
-        // Change side halfway through the flip when the tape is edge-on.
-        // setSide() calculates mirror position and updates pendingSeekRef.
-        setTimeout(() => {
-            setSide(nextSide);
-        }, 600);
+        // Immediately switch side and trigger play to retain user gesture
+        setSide(nextSide);
+        setPlayIntent(true);
 
-        // After flip animation completes, unlock UI and auto-play at mirror position
+        // After flip animation completes, unlock UI
         setTimeout(() => {
             setIsEjecting(false);
-            setPlayIntent(true);
-            playRef.current();
         }, 1200);
     };
 

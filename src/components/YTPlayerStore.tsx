@@ -186,12 +186,10 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // Only react to currentTrack changes if player is ready
     if (playerRef.current && typeof playerRef.current.loadVideoById === "function") {
        if (currentTrack && activeMedia) {
-         // Side flip in progress — do NOT touch the player here. The mirror position
-         // is stored in pendingSeekRef and will be used when play() is called at 1200ms.
+         // Side flip in progress — setSide already called loadVideoById. Don't touch the player here.
          if (sideFlipRef.current) {
            sideFlipRef.current = false;
            preventAutoPlayRef.current = false;
-           setPlayerStatus("UNSTARTED");
            return;
          }
 
@@ -307,13 +305,11 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         : null;
 
       if (currentVid === trackToPlay.youtubeId) {
-        // Same video loaded. Seek, then slightly delay play to ensure API consistency.
+        // Same video loaded. Play first, then seek to ensure YouTube API doesn't drop the command.
+        if (playerRef.current && typeof playerRef.current.playVideo === "function") {
+            playerRef.current.playVideo();
+        }
         playerRef.current.seekTo(seekTime, true);
-        setTimeout(() => {
-            if (playerRef.current && typeof playerRef.current.playVideo === "function") {
-                playerRef.current.playVideo();
-            }
-        }, 100);
       } else {
         playerRef.current.loadVideoById({ videoId: trackToPlay.youtubeId, startSeconds: seekTime });
       }
@@ -321,27 +317,27 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       return;
     }
 
-    const ytState = typeof playerRef.current.getPlayerState === "function"
-      ? playerRef.current.getPlayerState()
-      : -1;
     const currentVid = typeof playerRef.current.getVideoData === "function"
       ? playerRef.current.getVideoData()?.video_id
       : null;
-    const isCorrectVideo = currentVid === currentTrack.youtubeId || !currentVid;
-    const expectedTime = currentTimeRef.current || currentTrack.startTime;
-    const playerTime = typeof playerRef.current.getCurrentTime === "function"
-      ? playerRef.current.getCurrentTime()
-      : null;
-    const isAtCorrectPosition = playerTime !== null && Math.abs(playerTime - expectedTime) <= 2;
+    const expectedTime = currentTimeRef.current || trackToPlay.startTime;
 
-    if (ytState !== -1 && isCorrectVideo && isAtCorrectPosition) {
-      playerRef.current.playVideo();
+    if (currentVid === trackToPlay.youtubeId) {
+        if (typeof playerRef.current.playVideo === "function") {
+            playerRef.current.playVideo();
+        }
+        playerRef.current.seekTo(expectedTime, true);
     } else {
-      playerRef.current.loadVideoById({ videoId: currentTrack.youtubeId, startSeconds: expectedTime });
+        playerRef.current.loadVideoById({ videoId: trackToPlay.youtubeId, startSeconds: expectedTime });
     }
     setPlayerStatus("BUFFERING");
   };
-  const pause = () => { if (playerRef.current && typeof playerRef.current.pauseVideo === "function") playerRef.current.pauseVideo(); };
+  const pause = () => { 
+      if (playerRef.current && typeof playerRef.current.pauseVideo === "function") {
+          playerRef.current.pauseVideo(); 
+      }
+      setPlayerStatus("PAUSED");
+  };
   const stop = () => { if (playerRef.current && typeof playerRef.current.stopVideo === "function") { playerRef.current.stopVideo(); setPlayerStatus("UNSTARTED"); } };
   const togglePlay = () => { if (playerStatus === "PLAYING") pause(); else play(); };
   const seekTo = (seconds: number) => {
@@ -403,8 +399,12 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Mark this as a side-flip so the currentTrack useEffect won't touch the player
       sideFlipRef.current = true;
       preventAutoPlayRef.current = true;
-      // Store mirror position so play() can seek to it
-      pendingSeekRef.current = newTime;
+      
+      if (playerRef.current) {
+        const newTrack = newTracks[newIndex];
+        playerRef.current.loadVideoById({ videoId: newTrack.youtubeId, startSeconds: newTime });
+        setPlayerStatus("BUFFERING");
+      }
       
       // Update all state together (React batches these)
       setCurrentSide(side);
