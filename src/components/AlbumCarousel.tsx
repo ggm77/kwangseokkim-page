@@ -28,10 +28,10 @@ export const AlbumCarousel: React.FC = () => {
                 <p className="hero-subtitle">ALBUM BY ALBUM</p>
                 <h1 className="hero-title">다시 부르기 : 아날로그 김광석</h1>
                 <p className="hero-desc">
-                    앨범 한 장 한 장에는<br />
-                    그 시절 김광석의 목소리가 고스란히 담겨 있습니다.<br /><br />
-                    처음 트랙부터 마지막 트랙까지—<br />
-                    앨범 그대로, 음악 그대로 들어보세요.
+                    노래 한 곡만 듣고 넘기기엔 그가 남긴 위로가 너무나 깊습니다.<br /><br />
+                    LP와 카세트테이프의 온기를 빌려,<br />
+                    김광석이 처음 들려주고 싶었던 앨범 전체의 이야기를<br />
+                    온전히 경험해 보세요.
                 </p>
             </div>
 
