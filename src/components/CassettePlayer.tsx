@@ -198,7 +198,8 @@ export const CassettePlayer: React.FC = () => {
         };
     }, [playerStatus, play, pause, startFF, startREW, stopSearch]);
 
-    // Auto-reverse: flip the tape and always resume playback at mirror position
+    // Auto-reverse: flip the tape, then resume on the other side only after the
+    // flip animation finishes — so playback doesn't overlap the rotation.
     const handleEject = () => {
         if (isEjecting) return;
         setIsEjecting(true);
@@ -207,13 +208,16 @@ export const CassettePlayer: React.FC = () => {
         // Start CSS rotation immediately
         setIsFlipped(nextSide === "B");
 
+        // Stop playback now; setSide stashes the mirror position in pendingSeekRef
+        // without starting playback.
         pause();
         setSide(nextSide);
-        setPlayIntent(true);
 
-        // After flip animation completes, unlock UI
+        // Flip animation (ejectUp + rotateY) runs 1.2s — resume once it completes.
         setTimeout(() => {
             setIsEjecting(false);
+            setPlayIntent(true);
+            playRef.current();
         }, 1200);
     };
 
@@ -372,6 +376,7 @@ export const CassettePlayer: React.FC = () => {
                             {/* REW Button */}
                             <button
                                 className={`deck-btn btn-rew ${isREW ? "pressed" : ""}`}
+                                disabled={isEjecting}
                                 onMouseDown={startREW}
                                 onMouseUp={stopSearch}
                                 onMouseLeave={isREW ? stopSearch : undefined}
@@ -385,6 +390,7 @@ export const CassettePlayer: React.FC = () => {
                             {/* FF Button */}
                             <button
                                 className={`deck-btn btn-ff ${isFF ? "pressed" : ""}`}
+                                disabled={isEjecting}
                                 onMouseDown={startFF}
                                 onMouseUp={stopSearch}
                                 onMouseLeave={isFF ? stopSearch : undefined}
@@ -399,7 +405,7 @@ export const CassettePlayer: React.FC = () => {
                             <button
                                 className={`deck-btn btn-play ${playIntent || playerStatus === "PLAYING" || playerStatus === "BUFFERING" ? "pressed" : ""}`}
                                 onClick={() => { if (!isAtEnd) { setPlayIntent(true); play(); } }}
-                                disabled={playerStatus === "PLAYING" || playerStatus === "BUFFERING" || isAtEnd}
+                                disabled={playerStatus === "PLAYING" || playerStatus === "BUFFERING" || isAtEnd || isEjecting}
                             >
                                 <div className="btn-cap"><span className="icon">&#9658;</span><span className="label">PLAY</span></div>
                             </button>
@@ -407,6 +413,7 @@ export const CassettePlayer: React.FC = () => {
                             {/* Stop Button */}
                             <button
                                 className={`deck-btn btn-stop ${playerStatus === "PAUSED" || playerStatus === "ENDED" ? "pressed" : ""}`}
+                                disabled={isEjecting}
                                 onClick={pause}
                             >
                                 <div className="btn-cap"><span className="icon">&#9632;</span><span className="label">STOP</span></div>

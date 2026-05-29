@@ -186,16 +186,12 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // Only react to currentTrack changes if player is ready
     if (playerRef.current && typeof playerRef.current.loadVideoById === "function") {
        if (currentTrack && activeMedia) {
-         // Side flip in progress — load and play at the mirror position stored by setSide().
+         // Side flip in progress. The mirror position is stored in pendingSeekRef;
+         // CassettePlayer calls play() once the flip animation finishes, so don't
+         // load or play here — this keeps the tape silent during the rotation.
          if (sideFlipRef.current) {
            sideFlipRef.current = false;
            preventAutoPlayRef.current = false;
-           if (pendingSeekRef.current !== null) {
-             const seekTime = pendingSeekRef.current;
-             pendingSeekRef.current = null;
-             playerRef.current.loadVideoById({ videoId: currentTrack.youtubeId, startSeconds: seekTime });
-             setPlayerStatus("BUFFERING");
-           }
            return;
          }
 
