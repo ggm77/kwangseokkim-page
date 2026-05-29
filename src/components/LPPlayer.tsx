@@ -570,7 +570,7 @@ export const LPPlayer: React.FC = () => {
 
                 {/* Right/Center: Large Draggable Turntable */}
                 <div className="player-column">
-                    <div className="turntable-deck-outer glass-effect">
+                    <div className="turntable-deck-outer">
                         {/* Turntable Platter & Vinyl Record */}
                         <div className="platter-compartment" ref={platterRef}>
                             <div
