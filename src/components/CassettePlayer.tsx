@@ -338,7 +338,7 @@ export const CassettePlayer: React.FC = () => {
 
                 {/* Right/Center: Large Interactive Cassette Player */}
                 <div className="player-column">
-                    <div className="cassette-deck-outer glass-effect">
+                    <div className="cassette-deck-outer">
                         <div className="deck-header">
                             <span className="brand-logo font-retro">DIRECT DRIVE / HI-FI</span>
                             <div className="counter-led">
