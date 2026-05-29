@@ -27,7 +27,7 @@ const Header: React.FC = () => {
     return (
         <header className={`site-header ${showHeader ? "scrolled" : ""}`}>
             <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                <h1 className="site-logo">다시부르기: 가객의 앨범</h1>
+                <h1 className="site-logo">다시부르기: 가객의 앨범들</h1>
             </Link>
         </header>
     );

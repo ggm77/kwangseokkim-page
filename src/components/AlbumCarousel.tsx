@@ -26,7 +26,7 @@ export const AlbumCarousel: React.FC = () => {
             {/* Hero Title Area — matching design/home.png */}
             <div className="home-hero">
                 <p className="hero-subtitle">ALBUM BY ALBUM</p>
-                <h1 className="hero-title">다시부르기: 가객의 앨범</h1>
+                <h1 className="hero-title">다시부르기: 가객의 앨범들</h1>
                 <p className="hero-desc">
                     노래 한 곡만 듣고 넘기기엔 그가 남긴 위로가 너무나 깊습니다.<br /><br />
                     LP와 카세트테이프의 온기를 빌려,<br />
