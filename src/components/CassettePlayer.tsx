@@ -14,14 +14,16 @@ export const CassettePlayer: React.FC = () => {
         pause,
         seekTo,
         setSide,
-        resetPlayer
+        resetPlayer,
+        selectMedia
     } = useYTPlayer();
     
     const navigate = useNavigate();
 
     useEffect(() => {
         window.scrollTo(0, 0);
-    }, []);
+        selectMedia("cassette");
+    }, [selectMedia]);
 
     useEffect(() => {
         if (!activeAlbum || !currentTrack) {
@@ -36,6 +38,10 @@ export const CassettePlayer: React.FC = () => {
     const [isREW, setIsREW] = useState<boolean>(false);
     const [playIntent, setPlayIntent] = useState<boolean>(false);
     const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth <= 860);
+
+    // Keep a ref to the latest play function so setTimeout always calls the current version
+    const playRef = useRef(play);
+    useEffect(() => { playRef.current = play; }, [play]);
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 860);
@@ -62,6 +68,7 @@ export const CassettePlayer: React.FC = () => {
     // Sync playIntent with actual player status
     useEffect(() => {
         if (playerStatus === "PAUSED" || playerStatus === "ENDED" || playerStatus === "UNSTARTED") {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing optimistic playIntent to confirmed player status
             setPlayIntent(false);
         } else if (playerStatus === "PLAYING" || playerStatus === "BUFFERING") {
             setPlayIntent(true);
@@ -84,6 +91,7 @@ export const CassettePlayer: React.FC = () => {
 
     // Sync isFlipped with currentSide
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing local isFlipped to the external store's currentSide
         setIsFlipped(currentSide === "B");
     }, [currentSide]);
 
@@ -192,24 +200,26 @@ export const CassettePlayer: React.FC = () => {
         };
     }, [playerStatus, play, pause, startFF, startREW, stopSearch]);
 
-    // Natural 180-degree flip animation
+    // Auto-reverse: flip the tape, then resume on the other side only after the
+    // flip animation finishes — so playback doesn't overlap the rotation.
     const handleEject = () => {
         if (isEjecting) return;
         setIsEjecting(true);
-        pause();
 
         const nextSide = currentSide === "A" ? "B" : "A";
         // Start CSS rotation immediately
         setIsFlipped(nextSide === "B");
 
-        // Change text/side halfway through the flip when the tape is edge-on
-        setTimeout(() => {
-            setSide(nextSide);
-        }, 600);
+        // Stop playback now; setSide stashes the mirror position in pendingSeekRef
+        // without starting playback.
+        pause();
+        setSide(nextSide);
 
-        // Unlock after flip completes
+        // Flip animation (ejectUp + rotateY) runs 1.2s — resume once it completes.
         setTimeout(() => {
             setIsEjecting(false);
+            setPlayIntent(true);
+            playRef.current();
         }, 1200);
     };
 
@@ -235,6 +245,13 @@ export const CassettePlayer: React.FC = () => {
 
     const renderTapeFace = (faceClass: string, faceSide: "A" | "B") => {
         const sideName = faceSide;
+        // Each face shows reel amounts from its own side's perspective; the
+        // hidden side is the left/right mirror of the visible one. Combined with
+        // the ratio-based flip (progress_B = 1 - progress_A), this keeps each
+        // face's tape amount continuous when flipping — the cassette only
+        // rotates instead of the amount jumping to the other side.
+        const faceRLeft = faceSide === currentSide ? rLeft : rRight;
+        const faceRRight = faceSide === currentSide ? rRight : rLeft;
         return (
             <div className={`cassette-tape-body ${faceClass}`}>
                 {/* Label Sticker */}
@@ -254,7 +271,7 @@ export const CassettePlayer: React.FC = () => {
                             {/* Supply Reel (Left) & Tape thickness */}
                             <div className="tape-reel-hub left-reel">
                                 <svg className="tape-wrap-svg">
-                                    <circle cx="50%" cy="50%" r={rLeft} className="tape-wrap-color" />
+                                    <circle cx="50%" cy="50%" r={faceRLeft} className="tape-wrap-color" />
                                     <circle cx="50%" cy="50%" r={R_MIN} className="tape-reel-spokes-bg" />
                                 </svg>
                                 <div className={`spindle-gear ${reelSpeedClass}`}></div>
@@ -263,7 +280,7 @@ export const CassettePlayer: React.FC = () => {
                             {/* Take-up Reel (Right) & Tape thickness */}
                             <div className="tape-reel-hub right-reel">
                                 <svg className="tape-wrap-svg">
-                                    <circle cx="50%" cy="50%" r={rRight} className="tape-wrap-color" />
+                                    <circle cx="50%" cy="50%" r={faceRRight} className="tape-wrap-color" />
                                     <circle cx="50%" cy="50%" r={R_MIN} className="tape-reel-spokes-bg" />
                                 </svg>
                                 <div className={`spindle-gear ${reelSpeedClass}`}></div>
@@ -330,7 +347,7 @@ export const CassettePlayer: React.FC = () => {
 
                 {/* Right/Center: Large Interactive Cassette Player */}
                 <div className="player-column">
-                    <div className="cassette-deck-outer glass-effect">
+                    <div className="cassette-deck-outer">
                         <div className="deck-header">
                             <span className="brand-logo font-retro">DIRECT DRIVE / HI-FI</span>
                             <div className="counter-led">
@@ -343,9 +360,9 @@ export const CassettePlayer: React.FC = () => {
                         <div className="tape-compartment">
                             <div className={`cassette-eject-lifter ${isEjecting ? "eject-anim" : ""}`}>
                             <div className={`cassette-tape-wrap ${isFlipped ? "flipped-side" : ""}`}>
-                                {/* 3D Extrusion Layers (Rounded Corners) */}
-                                {Array.from({ length: 15 }).map((_, i) => {
-                                    const zOffset = 7 - i;
+                                {/* 3D Extrusion Layers (Rounded Corners) — 9 layers across +7..-7 */}
+                                {Array.from({ length: 9 }).map((_, i) => {
+                                    const zOffset = 7 - i * 1.75;
                                     const isSeam = zOffset === 0;
                                     return (
                                         <div 
@@ -368,6 +385,7 @@ export const CassettePlayer: React.FC = () => {
                             {/* REW Button */}
                             <button
                                 className={`deck-btn btn-rew ${isREW ? "pressed" : ""}`}
+                                disabled={isEjecting}
                                 onMouseDown={startREW}
                                 onMouseUp={stopSearch}
                                 onMouseLeave={isREW ? stopSearch : undefined}
@@ -381,6 +399,7 @@ export const CassettePlayer: React.FC = () => {
                             {/* FF Button */}
                             <button
                                 className={`deck-btn btn-ff ${isFF ? "pressed" : ""}`}
+                                disabled={isEjecting}
                                 onMouseDown={startFF}
                                 onMouseUp={stopSearch}
                                 onMouseLeave={isFF ? stopSearch : undefined}
@@ -395,7 +414,7 @@ export const CassettePlayer: React.FC = () => {
                             <button
                                 className={`deck-btn btn-play ${playIntent || playerStatus === "PLAYING" || playerStatus === "BUFFERING" ? "pressed" : ""}`}
                                 onClick={() => { if (!isAtEnd) { setPlayIntent(true); play(); } }}
-                                disabled={playerStatus === "PLAYING" || playerStatus === "BUFFERING" || isAtEnd}
+                                disabled={playerStatus === "PLAYING" || playerStatus === "BUFFERING" || isAtEnd || isEjecting}
                             >
                                 <div className="btn-cap"><span className="icon">&#9658;</span><span className="label">PLAY</span></div>
                             </button>
@@ -403,6 +422,7 @@ export const CassettePlayer: React.FC = () => {
                             {/* Stop Button */}
                             <button
                                 className={`deck-btn btn-stop ${playerStatus === "PAUSED" || playerStatus === "ENDED" ? "pressed" : ""}`}
+                                disabled={isEjecting}
                                 onClick={pause}
                             >
                                 <div className="btn-cap"><span className="icon">&#9632;</span><span className="label">STOP</span></div>
@@ -414,7 +434,7 @@ export const CassettePlayer: React.FC = () => {
                                 onClick={handleEject}
                                 disabled={isEjecting}
                             >
-                                <div className="btn-cap"><span className="icon">&#9167;</span><span className="label">FLIP</span></div>
+                                <div className="btn-cap"><span className="icon">&#8644;</span><span className="label">REVERSE</span></div>
                             </button>
                         </div>
                     </div>

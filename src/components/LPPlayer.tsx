@@ -15,9 +15,21 @@ export const LPPlayer: React.FC = () => {
         seekTo,
         setSide,
         resetPlayer,
+        selectMedia
     } = useYTPlayer();
 
     const navigate = useNavigate();
+
+    useEffect(() => {
+        window.scrollTo(0, 0);
+        selectMedia("lp");
+    }, [selectMedia]);
+
+    useEffect(() => {
+        if (!activeAlbum || !currentTrack) {
+            navigate("/");
+        }
+    }, [activeAlbum, currentTrack, navigate]);
 
     const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
     const [viewSide, setViewSide] = useState<"A" | "B">(currentSide);
@@ -32,10 +44,10 @@ export const LPPlayer: React.FC = () => {
         currentAngle: number | null;
     }>({ isDragging: false, startAngle: 0, startMouseAngle: 0, currentAngle: null });
     const [seekAngle, setSeekAngle] = useState<number | null>(null);
-    const seekTimeoutRef = useRef<any>(null);
-    const liftStopTimerRef = useRef<any>(null);
-    const playDelayTimerRef = useRef<any>(null);
-    const sideChangeTimerRef = useRef<any>(null);
+    const seekTimeoutRef = useRef<number | null>(null);
+    const liftStopTimerRef = useRef<number | null>(null);
+    const playDelayTimerRef = useRef<number | null>(null);
+    const sideChangeTimerRef = useRef<number | null>(null);
     const playerStatusRef = useRef(playerStatus);
     const playRef = useRef(play);
     const pauseRef = useRef(pause);
@@ -48,6 +60,7 @@ export const LPPlayer: React.FC = () => {
 
     // Sync viewSide with currentSide when currentSide changes naturally (e.g. auto flip)
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing local view state to the external store's currentSide
         setViewSide(currentSide);
     }, [currentSide]);
 
@@ -136,6 +149,7 @@ export const LPPlayer: React.FC = () => {
 
     useEffect(() => {
         if (playerStatus === "PLAYING") {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- clearing optimistic play intent once playback is confirmed
             setPlayIntent(false);
         }
     }, [playerStatus]);
@@ -558,7 +572,7 @@ export const LPPlayer: React.FC = () => {
 
                 {/* Right/Center: Large Draggable Turntable */}
                 <div className="player-column">
-                    <div className="turntable-deck-outer glass-effect">
+                    <div className="turntable-deck-outer">
                         {/* Turntable Platter & Vinyl Record */}
                         <div className="platter-compartment" ref={platterRef}>
                             <div

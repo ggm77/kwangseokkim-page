@@ -1,10 +1,54 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from "react";
 import type { Album, Track } from "../data/albums";
 import { ALBUMS } from "../data/albums";
 
+interface YTPlayer {
+  loadVideoById(opts: { videoId: string; startSeconds?: number }): void;
+  playVideo(): void;
+  pauseVideo(): void;
+  stopVideo(): void;
+  seekTo(seconds: number, allowSeekAhead: boolean): void;
+  getCurrentTime(): number;
+  getDuration(): number;
+  getPlayerState(): number;
+  getVideoData(): { video_id: string };
+  setVolume(volume: number): void;
+  mute(): void;
+  unMute(): void;
+}
+
+interface YTPlayerEvent {
+  target: YTPlayer;
+  data: number;
+}
+
+interface YTNamespace {
+  Player: new (
+    elementId: string,
+    options: {
+      height?: string;
+      width?: string;
+      videoId?: string;
+      playerVars?: Record<string, unknown>;
+      events?: {
+        onReady?: (event: YTPlayerEvent) => void;
+        onStateChange?: (event: YTPlayerEvent) => void;
+      };
+    }
+  ) => YTPlayer;
+  PlayerState: {
+    UNSTARTED: number;
+    ENDED: number;
+    PLAYING: number;
+    PAUSED: number;
+    BUFFERING: number;
+    CUED: number;
+  };
+}
+
 declare global {
   interface Window {
-    YT: any;
+    YT: YTNamespace;
     onYouTubeIframeAPIReady: (() => void) | undefined;
   }
 }
@@ -42,6 +86,7 @@ interface YTPlayerContextType {
 
 const YTPlayerContext = createContext<YTPlayerContextType | undefined>(undefined);
 
+// eslint-disable-next-line react-refresh/only-export-components -- hook is co-located with its provider; the fast-refresh caveat is acceptable here
 export const useYTPlayer = () => {
   const context = useContext(YTPlayerContext);
   if (!context) {
@@ -57,7 +102,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (saved) {
         return ALBUMS.find(a => String(a.id) === saved) || null;
       }
-    } catch(e) {}
+    } catch { /* sessionStorage 사용 불가 환경에서는 무시 */ }
     return null;
   });
   const [activeMedia, setActiveMedia] = useState<"lp" | "cassette" | null>(null);
@@ -69,14 +114,19 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [volume, setVolumeState] = useState<number>(80);
 
-  const playerRef = useRef<any>(null);
+  const playerRef = useRef<YTPlayer | null>(null);
   const timeUpdateInterval = useRef<number | null>(null);
   const preventAutoPlayRef = useRef<boolean>(false);
+  const sideFlipRef = useRef<boolean>(false);
   const currentTimeRef = useRef<number>(0);
   const currentSideRef = useRef<"A" | "B">("A");
+  const pendingSeekRef = useRef<number | null>(null);
   const iframeContainerId = "yt-global-player";
   
-  const tracks = activeAlbum ? (currentSide === "A" ? activeAlbum.tracksSideA : activeAlbum.tracksSideB) : [];
+  const tracks = useMemo(
+    () => (activeAlbum ? (currentSide === "A" ? activeAlbum.tracksSideA : activeAlbum.tracksSideB) : []),
+    [activeAlbum, currentSide]
+  );
   const currentTrack = tracks[currentTrackIndex] || null;
 
   // Refs for callbacks
@@ -143,7 +193,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         videoId: ALBUMS[0].tracksSideA[0].youtubeId,
         playerVars: { autoplay: 0, controls: 0, disablekb: 1, fs: 0, rel: 0, showinfo: 0, modestbranding: 1, origin: window.location.origin },
         events: {
-          onReady: (event: any) => {
+          onReady: (event: YTPlayerEvent) => {
             if (isCancelled) return;
             const { volume, isMuted } = volMuteRef.current;
             event.target.setVolume(volume);
@@ -151,7 +201,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             
             // Do not cue video here. Keep UNSTARTED to avoid Safari frozen state.
           },
-          onStateChange: (event: any) => {
+          onStateChange: (event: YTPlayerEvent) => {
             if (isCancelled) return;
             const state = event.data;
             let statusStr: PlayerStatus = "UNSTARTED";
@@ -160,7 +210,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             else if (state === window.YT.PlayerState.BUFFERING) statusStr = "BUFFERING";
             else if (state === window.YT.PlayerState.ENDED) statusStr = "ENDED";
             else if (state === window.YT.PlayerState.CUED) statusStr = "CUED";
-            
+
             setPlayerStatus(statusStr);
             if (state === window.YT.PlayerState.PLAYING) {
               setDuration(event.target.getDuration() || stateRef.current.currentTrack?.duration || 0);
@@ -179,11 +229,23 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => { isCancelled = true; };
   }, []);
 
-  // Sync track changes if done from next/prev/side change
+  // Sync track changes if done from next/prev/side change.
+  // This effect drives the external YT player and syncs derived state, so the
+  // in-effect setState calls below are intentional.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     // Only react to currentTrack changes if player is ready
     if (playerRef.current && typeof playerRef.current.loadVideoById === "function") {
        if (currentTrack && activeMedia) {
+         // Side flip in progress. The mirror position is stored in pendingSeekRef;
+         // CassettePlayer calls play() once the flip animation finishes, so don't
+         // load or play here — this keeps the tape silent during the rotation.
+         if (sideFlipRef.current) {
+           sideFlipRef.current = false;
+           preventAutoPlayRef.current = false;
+           return;
+         }
+
          // If it was playing or just ended (auto-advance), load and play
          if (!preventAutoPlayRef.current && (playerStatus === "PLAYING" || playerStatus === "ENDED" || playerStatus === "BUFFERING")) {
            const currentVid = typeof playerRef.current.getVideoData === 'function' ? playerRef.current.getVideoData().video_id : null;
@@ -217,7 +279,9 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
          setDuration(0);
        }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally excludes playerStatus to avoid re-running on every status change
   }, [currentTrack, activeMedia]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if (playerStatus === "PLAYING") {
@@ -262,7 +326,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setActiveMedia(media);
     setCurrentSide("A");
     setCurrentTrackIndex(0);
-    try { sessionStorage.setItem("activeAlbumId", String(album.id)); } catch(e) {}
+    try { sessionStorage.setItem("activeAlbumId", String(album.id)); } catch { /* sessionStorage 사용 불가 환경에서는 무시 */ }
     
     const firstTrack = album.tracksSideA[0];
     setCurrentTime(firstTrack.startTime);
@@ -274,39 +338,41 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       if (album) sessionStorage.setItem("activeAlbumId", String(album.id));
       else sessionStorage.removeItem("activeAlbumId");
-    } catch(e) {}
+    } catch { /* sessionStorage 사용 불가 환경에서는 무시 */ }
     setCurrentSide("A");
     setCurrentTrackIndex(0);
     setCurrentTime(0);
   };
   
-  const selectMedia = (media: "lp" | "cassette" | null) => { setActiveMedia(media); };
+  // useCallback so the reference stays stable — otherwise every 50ms currentTime
+  // update re-creates it, re-firing the players' useEffect([selectMedia]) and its
+  // window.scrollTo(0,0), which locks the page scroll during playback.
+  const selectMedia = useCallback((media: "lp" | "cassette" | null) => { setActiveMedia(media); }, []);
   
   const play = () => {
-    if (!playerRef.current || !currentTrack) return;
-    const ytState = typeof playerRef.current.getPlayerState === "function"
-      ? playerRef.current.getPlayerState()
-      : -1;
-    const currentVid = typeof playerRef.current.getVideoData === "function"
-      ? playerRef.current.getVideoData()?.video_id
-      : null;
-      
-    // getVideoData() might return null/empty when the player is paused for a while.
-    // If it returns a string, we check if it matches. If it's falsy, we assume it matches
-    // because we haven't actively loaded a different video yet.
-    const isCorrectVideo = currentVid === currentTrack.youtubeId || !currentVid;
-        
-    if (ytState !== -1 && isCorrectVideo) {
-      playerRef.current.playVideo();
-    } else {
-      playerRef.current.loadVideoById({
-        videoId: currentTrack.youtubeId,
-        startSeconds: currentTimeRef.current || currentTrack.startTime
-      });
+    // Read from stateRef to completely avoid stale closures in setTimeout callbacks
+    const trackToPlay = stateRef.current.currentTrack;
+    if (!playerRef.current || !trackToPlay) return;
+
+    if (pendingSeekRef.current !== null) {
+      const seekTime = pendingSeekRef.current;
+      pendingSeekRef.current = null;
+      // loadVideoById works in all player states (UNSTARTED, PAUSED, PLAYING, ENDED)
+      playerRef.current.loadVideoById({ videoId: trackToPlay.youtubeId, startSeconds: seekTime });
+      setPlayerStatus("BUFFERING");
+      return;
     }
+
+    const expectedTime = currentTimeRef.current || trackToPlay.startTime;
+    playerRef.current.loadVideoById({ videoId: trackToPlay.youtubeId, startSeconds: expectedTime });
     setPlayerStatus("BUFFERING");
   };
-  const pause = () => { if (playerRef.current && typeof playerRef.current.pauseVideo === "function") playerRef.current.pauseVideo(); };
+  const pause = () => { 
+      if (playerRef.current && typeof playerRef.current.pauseVideo === "function") {
+          playerRef.current.pauseVideo(); 
+      }
+      setPlayerStatus("PAUSED");
+  };
   const stop = () => { if (playerRef.current && typeof playerRef.current.stopVideo === "function") { playerRef.current.stopVideo(); setPlayerStatus("UNSTARTED"); } };
   const togglePlay = () => { if (playerStatus === "PLAYING") pause(); else play(); };
   const seekTo = (seconds: number) => {
@@ -322,35 +388,42 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
   const setSide = (side: "A" | "B") => {
-    if (activeMedia === "cassette" && activeAlbum) {
-      // Simulate physical tape flipping
-      const sideA = activeAlbum.tracksSideA;
-      const sideB = activeAlbum.tracksSideB;
-      
+    if (side === currentSideRef.current) return;
+    
+    // Always use stateRef to avoid any potential stale closure bugs in this handler
+    const safeActiveAlbum = stateRef.current.activeAlbum;
+    const safeActiveMedia = stateRef.current.activeMedia;
+
+    if (safeActiveAlbum && safeActiveMedia === "cassette") {
+      // Simulate physical tape flipping — mirror the tape position
+      const sideA = safeActiveAlbum.tracksSideA;
+      const sideB = safeActiveAlbum.tracksSideB;
+
       const startA = sideA[0].startTime;
       const endA = sideA[sideA.length - 1].startTime + sideA[sideA.length - 1].duration;
       const durA = endA - startA;
-      
+
       const startB = sideB[0].startTime;
       const endB = sideB[sideB.length - 1].startTime + sideB[sideB.length - 1].duration;
       const durB = endB - startB;
-      
-      const physicalSideLength = Math.max(durA, durB);
-      
+
       const oldStart = currentSideRef.current === "A" ? startA : startB;
-      const oldElapsed = Math.max(0, Math.min(currentTimeRef.current - oldStart, physicalSideLength));
-      
-      const newElapsed = physicalSideLength - oldElapsed;
+      const oldDur = currentSideRef.current === "A" ? durA : durB;
       const newStart = side === "A" ? startA : startB;
-      let newTime = newStart + newElapsed;
-      
+      const newDur = side === "A" ? durA : durB;
+      const newEnd = newStart + newDur;
+
+      // Mirror by progress ratio, not absolute time. The two sides differ in
+      // length, so absolute mirroring (max length) overshoots past the shorter
+      // side's last track into dead tape, where playback can't start.
+      const oldElapsed = Math.max(0, Math.min(currentTimeRef.current - oldStart, oldDur));
+      const progress = oldDur > 0 ? oldElapsed / oldDur : 0;
+      let newTime = newStart + (1 - progress) * newDur;
+      // Keep just inside the last track so playback can always resume there
+      // (and so it never lands on the dead end where isAtEnd would block play).
+      newTime = Math.max(newStart, Math.min(newTime, newEnd - 1.5));
+
       const newTracks = side === "A" ? sideA : sideB;
-      const newEnd = newTracks[newTracks.length - 1].startTime + newTracks[newTracks.length - 1].duration;
-      
-      if (newTime > newEnd) {
-          newTime = newEnd;
-      }
-      
       let newIndex = newTracks.length - 1;
       for (let i = 0; i < newTracks.length; i++) {
           if (newTime >= newTracks[i].startTime && newTime < newTracks[i].startTime + newTracks[i].duration) {
@@ -359,27 +432,22 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           }
       }
       
+      // Mark this as a side-flip so the currentTrack useEffect won't touch the player
+      sideFlipRef.current = true;
+      preventAutoPlayRef.current = true;
+      // Store mirror position — play() will use this via pendingSeekRef
+      pendingSeekRef.current = newTime;
+      
+      // Update all state together (React batches these)
       setCurrentSide(side);
       setCurrentTrackIndex(newIndex);
       setCurrentTime(newTime);
       currentTimeRef.current = newTime;
       currentSideRef.current = side;
-
-      // useEffect([currentTrack])가 BUFFERING 상태를 보고 currentTrack.startTime으로
-      // 재seek하지 못하도록 차단한 뒤, YT 플레이어를 직접 mirror 위치로 이동
-      preventAutoPlayRef.current = true;
-      if (playerRef.current && typeof playerRef.current.seekTo === "function") {
-        const ytState = typeof playerRef.current.getPlayerState === "function"
-          ? playerRef.current.getPlayerState()
-          : -1;
-        if (ytState !== -1 && ytState !== 5) {
-          playerRef.current.seekTo(newTime, true);
-        }
-      }
     } else {
       // LP resets to start
       setCurrentSide(side); setCurrentTrackIndex(0);
-      if (activeAlbum) { const newTracks = side === "A" ? activeAlbum.tracksSideA : activeAlbum.tracksSideB; setCurrentTime(newTracks[0]?.startTime || 0); }
+      if (safeActiveAlbum) { const newTracks = side === "A" ? safeActiveAlbum.tracksSideA : safeActiveAlbum.tracksSideB; setCurrentTime(newTracks[0]?.startTime || 0); }
       else setCurrentTime(0);
     }
   };

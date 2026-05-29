@@ -1,9 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&family=Nanum+Myeongjo:wght@400;700;800&family=Share+Tech+Mono&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 :root {
-    --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    --font-serif: 'Nanum Myeongjo', Georgia, serif;
-    --font-mono: 'Share Tech Mono', monospace;
+    --font-sans: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-serif: 'Gowun Batang', Georgia, serif;
+    --font-mono: 'IBM Plex Mono', monospace;
 
     /* Warm Wood-Tone Vintage Palette */
     --bg-page: #f3e9d7;
@@ -17,10 +18,6 @@
     --text-primary: #4a3728;
     --text-muted: #8a7060;
     --text-bright: #2e1c0e;
-
-    --glass-bg: rgba(255, 247, 233, 0.60);
-    --glass-border: rgba(176, 117, 51, 0.20);
-    --glass-shadow: 0 8px 24px 0 rgba(176, 117, 51, 0.12);
 
     --shadow-soft: 0 12px 40px -8px rgba(139, 92, 42, 0.15);
     --shadow-inset: inset 0 2px 6px 0 rgba(139, 92, 42, 0.10);
@@ -78,15 +75,6 @@ h1, h2, h3, h4 {
 .font-retro {
     font-family: var(--font-mono);
     letter-spacing: 0.1em;
-}
-
-/* Glassmorphism — bright frosted */
-.glass-effect {
-    background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow);
 }
 
 /* Ambient Visuals — warm glow instead of smoke */
