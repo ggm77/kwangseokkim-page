@@ -19,10 +19,6 @@
     --text-muted: #8a7060;
     --text-bright: #2e1c0e;
 
-    --glass-bg: rgba(255, 247, 233, 0.60);
-    --glass-border: rgba(176, 117, 51, 0.20);
-    --glass-shadow: 0 8px 24px 0 rgba(176, 117, 51, 0.12);
-
     --shadow-soft: 0 12px 40px -8px rgba(139, 92, 42, 0.15);
     --shadow-inset: inset 0 2px 6px 0 rgba(139, 92, 42, 0.10);
 
@@ -79,15 +75,6 @@ h1, h2, h3, h4 {
 .font-retro {
     font-family: var(--font-mono);
     letter-spacing: 0.1em;
-}
-
-/* Glassmorphism — bright frosted */
-.glass-effect {
-    background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--glass-shadow);
 }
 
 /* Ambient Visuals — warm glow instead of smoke */
