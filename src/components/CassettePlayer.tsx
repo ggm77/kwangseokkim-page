@@ -243,6 +243,13 @@ export const CassettePlayer: React.FC = () => {
 
     const renderTapeFace = (faceClass: string, faceSide: "A" | "B") => {
         const sideName = faceSide;
+        // Each face shows reel amounts from its own side's perspective; the
+        // hidden side is the left/right mirror of the visible one. Combined with
+        // the ratio-based flip (progress_B = 1 - progress_A), this keeps each
+        // face's tape amount continuous when flipping — the cassette only
+        // rotates instead of the amount jumping to the other side.
+        const faceRLeft = faceSide === currentSide ? rLeft : rRight;
+        const faceRRight = faceSide === currentSide ? rRight : rLeft;
         return (
             <div className={`cassette-tape-body ${faceClass}`}>
                 {/* Label Sticker */}
@@ -262,7 +269,7 @@ export const CassettePlayer: React.FC = () => {
                             {/* Supply Reel (Left) & Tape thickness */}
                             <div className="tape-reel-hub left-reel">
                                 <svg className="tape-wrap-svg">
-                                    <circle cx="50%" cy="50%" r={rLeft} className="tape-wrap-color" />
+                                    <circle cx="50%" cy="50%" r={faceRLeft} className="tape-wrap-color" />
                                     <circle cx="50%" cy="50%" r={R_MIN} className="tape-reel-spokes-bg" />
                                 </svg>
                                 <div className={`spindle-gear ${reelSpeedClass}`}></div>
@@ -271,7 +278,7 @@ export const CassettePlayer: React.FC = () => {
                             {/* Take-up Reel (Right) & Tape thickness */}
                             <div className="tape-reel-hub right-reel">
                                 <svg className="tape-wrap-svg">
-                                    <circle cx="50%" cy="50%" r={rRight} className="tape-wrap-color" />
+                                    <circle cx="50%" cy="50%" r={faceRRight} className="tape-wrap-color" />
                                     <circle cx="50%" cy="50%" r={R_MIN} className="tape-reel-spokes-bg" />
                                 </svg>
                                 <div className={`spindle-gear ${reelSpeedClass}`}></div>
