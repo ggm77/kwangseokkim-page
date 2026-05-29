@@ -949,6 +949,14 @@
     animation: ejectUp 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
+/* During the flip, promote the rotating cassette to its own GPU layer so its
+   heavy faces (SVG reels, gradients, shadows) are cached as a texture instead
+   of re-rasterizing every frame. Scoped to the flip only, so the 3D thickness
+   is not flattened while the cassette sits at rest. */
+.cassette-eject-lifter.eject-anim .cassette-tape-wrap {
+    will-change: transform;
+}
+
 @keyframes ejectUp {
     0%   { transform: translateY(0); }
     20%  { transform: translateY(-70px); }

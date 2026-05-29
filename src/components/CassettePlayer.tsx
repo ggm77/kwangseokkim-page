@@ -358,9 +358,9 @@ export const CassettePlayer: React.FC = () => {
                         <div className="tape-compartment">
                             <div className={`cassette-eject-lifter ${isEjecting ? "eject-anim" : ""}`}>
                             <div className={`cassette-tape-wrap ${isFlipped ? "flipped-side" : ""}`}>
-                                {/* 3D Extrusion Layers (Rounded Corners) */}
-                                {Array.from({ length: 15 }).map((_, i) => {
-                                    const zOffset = 7 - i;
+                                {/* 3D Extrusion Layers (Rounded Corners) — 9 layers across +7..-7 */}
+                                {Array.from({ length: 9 }).map((_, i) => {
+                                    const zOffset = 7 - i * 1.75;
                                     const isSeam = zOffset === 0;
                                     return (
                                         <div 
