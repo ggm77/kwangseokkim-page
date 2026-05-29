@@ -346,31 +346,32 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       // Simulate physical tape flipping — mirror the tape position
       const sideA = safeActiveAlbum.tracksSideA;
       const sideB = safeActiveAlbum.tracksSideB;
-      
+
       const startA = sideA[0].startTime;
       const endA = sideA[sideA.length - 1].startTime + sideA[sideA.length - 1].duration;
       const durA = endA - startA;
-      
+
       const startB = sideB[0].startTime;
       const endB = sideB[sideB.length - 1].startTime + sideB[sideB.length - 1].duration;
       const durB = endB - startB;
-      
-      const physicalSideLength = Math.max(durA, durB);
-      
+
       const oldStart = currentSideRef.current === "A" ? startA : startB;
-      const oldElapsed = Math.max(0, Math.min(currentTimeRef.current - oldStart, physicalSideLength));
-      
-      const newElapsed = physicalSideLength - oldElapsed;
+      const oldDur = currentSideRef.current === "A" ? durA : durB;
       const newStart = side === "A" ? startA : startB;
-      let newTime = newStart + newElapsed;
-      
+      const newDur = side === "A" ? durA : durB;
+      const newEnd = newStart + newDur;
+
+      // Mirror by progress ratio, not absolute time. The two sides differ in
+      // length, so absolute mirroring (max length) overshoots past the shorter
+      // side's last track into dead tape, where playback can't start.
+      const oldElapsed = Math.max(0, Math.min(currentTimeRef.current - oldStart, oldDur));
+      const progress = oldDur > 0 ? oldElapsed / oldDur : 0;
+      let newTime = newStart + (1 - progress) * newDur;
+      // Keep just inside the last track so playback can always resume there
+      // (and so it never lands on the dead end where isAtEnd would block play).
+      newTime = Math.max(newStart, Math.min(newTime, newEnd - 1.5));
+
       const newTracks = side === "A" ? sideA : sideB;
-      const newEnd = newTracks[newTracks.length - 1].startTime + newTracks[newTracks.length - 1].duration;
-      
-      if (newTime > newEnd) {
-          newTime = newEnd;
-      }
-      
       let newIndex = newTracks.length - 1;
       for (let i = 0; i < newTracks.length; i++) {
           if (newTime >= newTracks[i].startTime && newTime < newTracks[i].startTime + newTracks[i].duration) {
