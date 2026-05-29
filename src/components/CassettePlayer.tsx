@@ -68,6 +68,7 @@ export const CassettePlayer: React.FC = () => {
     // Sync playIntent with actual player status
     useEffect(() => {
         if (playerStatus === "PAUSED" || playerStatus === "ENDED" || playerStatus === "UNSTARTED") {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing optimistic playIntent to confirmed player status
             setPlayIntent(false);
         } else if (playerStatus === "PLAYING" || playerStatus === "BUFFERING") {
             setPlayIntent(true);
@@ -90,6 +91,7 @@ export const CassettePlayer: React.FC = () => {
 
     // Sync isFlipped with currentSide
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing local isFlipped to the external store's currentSide
         setIsFlipped(currentSide === "B");
     }, [currentSide]);
 

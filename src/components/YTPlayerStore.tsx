@@ -1,10 +1,54 @@
-import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback, useMemo } from "react";
 import type { Album, Track } from "../data/albums";
 import { ALBUMS } from "../data/albums";
 
+interface YTPlayer {
+  loadVideoById(opts: { videoId: string; startSeconds?: number }): void;
+  playVideo(): void;
+  pauseVideo(): void;
+  stopVideo(): void;
+  seekTo(seconds: number, allowSeekAhead: boolean): void;
+  getCurrentTime(): number;
+  getDuration(): number;
+  getPlayerState(): number;
+  getVideoData(): { video_id: string };
+  setVolume(volume: number): void;
+  mute(): void;
+  unMute(): void;
+}
+
+interface YTPlayerEvent {
+  target: YTPlayer;
+  data: number;
+}
+
+interface YTNamespace {
+  Player: new (
+    elementId: string,
+    options: {
+      height?: string;
+      width?: string;
+      videoId?: string;
+      playerVars?: Record<string, unknown>;
+      events?: {
+        onReady?: (event: YTPlayerEvent) => void;
+        onStateChange?: (event: YTPlayerEvent) => void;
+      };
+    }
+  ) => YTPlayer;
+  PlayerState: {
+    UNSTARTED: number;
+    ENDED: number;
+    PLAYING: number;
+    PAUSED: number;
+    BUFFERING: number;
+    CUED: number;
+  };
+}
+
 declare global {
   interface Window {
-    YT: any;
+    YT: YTNamespace;
     onYouTubeIframeAPIReady: (() => void) | undefined;
   }
 }
@@ -42,6 +86,7 @@ interface YTPlayerContextType {
 
 const YTPlayerContext = createContext<YTPlayerContextType | undefined>(undefined);
 
+// eslint-disable-next-line react-refresh/only-export-components -- hook is co-located with its provider; the fast-refresh caveat is acceptable here
 export const useYTPlayer = () => {
   const context = useContext(YTPlayerContext);
   if (!context) {
@@ -57,7 +102,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       if (saved) {
         return ALBUMS.find(a => String(a.id) === saved) || null;
       }
-    } catch(e) {}
+    } catch { /* sessionStorage 사용 불가 환경에서는 무시 */ }
     return null;
   });
   const [activeMedia, setActiveMedia] = useState<"lp" | "cassette" | null>(null);
@@ -69,7 +114,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [volume, setVolumeState] = useState<number>(80);
 
-  const playerRef = useRef<any>(null);
+  const playerRef = useRef<YTPlayer | null>(null);
   const timeUpdateInterval = useRef<number | null>(null);
   const preventAutoPlayRef = useRef<boolean>(false);
   const sideFlipRef = useRef<boolean>(false);
@@ -78,7 +123,10 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const pendingSeekRef = useRef<number | null>(null);
   const iframeContainerId = "yt-global-player";
   
-  const tracks = activeAlbum ? (currentSide === "A" ? activeAlbum.tracksSideA : activeAlbum.tracksSideB) : [];
+  const tracks = useMemo(
+    () => (activeAlbum ? (currentSide === "A" ? activeAlbum.tracksSideA : activeAlbum.tracksSideB) : []),
+    [activeAlbum, currentSide]
+  );
   const currentTrack = tracks[currentTrackIndex] || null;
 
   // Refs for callbacks
@@ -145,7 +193,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         videoId: ALBUMS[0].tracksSideA[0].youtubeId,
         playerVars: { autoplay: 0, controls: 0, disablekb: 1, fs: 0, rel: 0, showinfo: 0, modestbranding: 1, origin: window.location.origin },
         events: {
-          onReady: (event: any) => {
+          onReady: (event: YTPlayerEvent) => {
             if (isCancelled) return;
             const { volume, isMuted } = volMuteRef.current;
             event.target.setVolume(volume);
@@ -153,7 +201,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
             
             // Do not cue video here. Keep UNSTARTED to avoid Safari frozen state.
           },
-          onStateChange: (event: any) => {
+          onStateChange: (event: YTPlayerEvent) => {
             if (isCancelled) return;
             const state = event.data;
             let statusStr: PlayerStatus = "UNSTARTED";
@@ -181,7 +229,10 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return () => { isCancelled = true; };
   }, []);
 
-  // Sync track changes if done from next/prev/side change
+  // Sync track changes if done from next/prev/side change.
+  // This effect drives the external YT player and syncs derived state, so the
+  // in-effect setState calls below are intentional.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     // Only react to currentTrack changes if player is ready
     if (playerRef.current && typeof playerRef.current.loadVideoById === "function") {
@@ -228,7 +279,9 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
          setDuration(0);
        }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally excludes playerStatus to avoid re-running on every status change
   }, [currentTrack, activeMedia]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     if (playerStatus === "PLAYING") {
@@ -273,7 +326,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setActiveMedia(media);
     setCurrentSide("A");
     setCurrentTrackIndex(0);
-    try { sessionStorage.setItem("activeAlbumId", String(album.id)); } catch(e) {}
+    try { sessionStorage.setItem("activeAlbumId", String(album.id)); } catch { /* sessionStorage 사용 불가 환경에서는 무시 */ }
     
     const firstTrack = album.tracksSideA[0];
     setCurrentTime(firstTrack.startTime);
@@ -285,7 +338,7 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     try {
       if (album) sessionStorage.setItem("activeAlbumId", String(album.id));
       else sessionStorage.removeItem("activeAlbumId");
-    } catch(e) {}
+    } catch { /* sessionStorage 사용 불가 환경에서는 무시 */ }
     setCurrentSide("A");
     setCurrentTrackIndex(0);
     setCurrentTime(0);
