@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from "react";
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from "react";
 import type { Album, Track } from "../data/albums";
 import { ALBUMS } from "../data/albums";
 
@@ -291,7 +291,10 @@ export const YTPlayerProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setCurrentTime(0);
   };
   
-  const selectMedia = (media: "lp" | "cassette" | null) => { setActiveMedia(media); };
+  // useCallback so the reference stays stable — otherwise every 50ms currentTime
+  // update re-creates it, re-firing the players' useEffect([selectMedia]) and its
+  // window.scrollTo(0,0), which locks the page scroll during playback.
+  const selectMedia = useCallback((media: "lp" | "cassette" | null) => { setActiveMedia(media); }, []);
   
   const play = () => {
     // Read from stateRef to completely avoid stale closures in setTimeout callbacks
