@@ -37,14 +37,14 @@ export const CassettePlayer: React.FC = () => {
     const [isFF, setIsFF] = useState<boolean>(false);
     const [isREW, setIsREW] = useState<boolean>(false);
     const [playIntent, setPlayIntent] = useState<boolean>(false);
-    const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth <= 860);
+    const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth <= 800);
 
     // Keep a ref to the latest play function so setTimeout always calls the current version
     const playRef = useRef(play);
     useEffect(() => { playRef.current = play; }, [play]);
 
     useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth <= 860);
+        const handleResize = () => setIsMobile(window.innerWidth <= 800);
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
