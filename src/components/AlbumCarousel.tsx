@@ -290,7 +290,6 @@ export const AlbumCarousel: React.FC = () => {
                 <span>
                     {String(flowIndex + 1).padStart(2, "0")} / {String(N).padStart(2, "0")} — {currentAlbum.title}
                 </span>
-                <span>LP · CASSETTE TAPE — 매체를 골라 재생을 시작하세요</span>
             </div>
         </div>
     );
