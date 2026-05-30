@@ -100,11 +100,10 @@
     align-items: baseline;
     justify-content: space-between;
     flex: none;
-    padding: 24px 20px;
+    margin: 0 calc(-1 * clamp(20px, 5vw, 80px));
+    padding: 30px clamp(20px, 5vw, 80px) 18px;
     background: var(--paper-deep); /* Matches site-footer background */
     border-bottom: 1px solid var(--line);
-    border-radius: 6px;
-    margin-top: 20px;
 }
 .home-top .meta {
     font-family: var(--mono);
