@@ -38,7 +38,7 @@
 }
 
 .site-header.scrolled {
-    background: rgba(231, 222, 203, 0.94);
+    background: rgba(220, 209, 184, 0.94); /* Matches var(--paper-deep) #DCD1B8 */
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--line);
     transform: translateY(0);
@@ -100,8 +100,11 @@
     align-items: baseline;
     justify-content: space-between;
     flex: none;
-    padding: 30px 0 18px;
+    padding: 24px 20px;
+    background: var(--paper-deep); /* Matches site-footer background */
     border-bottom: 1px solid var(--line);
+    border-radius: 6px;
+    margin-top: 20px;
 }
 .home-top .meta {
     font-family: var(--mono);
