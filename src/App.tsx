@@ -75,7 +75,7 @@ function App() {
                     {/* Minimal footer */}
                     <footer className="site-footer">
                         <p className="copyright-text">
-                            Designed & Built as a Tribute Portfolio
+                            Designed & Built by <a href="https://github.com/ggm77" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', fontWeight: 'bold' }}>ggm77</a>
                         </p>
                         <p className="legal-notes">
                             본 웹사이트는 故 김광석 님을 기리기 위해 제작된 비영리 팬/포트폴리오 프로젝트입니다.<br />
