@@ -16,7 +16,6 @@ const Header: React.FC = () => {
             setIsScrolled(window.scrollY > 150);
         };
         window.addEventListener("scroll", handleScroll);
-        // Trigger once on mount
         handleScroll();
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
@@ -27,7 +26,10 @@ const Header: React.FC = () => {
     return (
         <header className={`site-header ${showHeader ? "scrolled" : ""}`}>
             <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-                <h1 className="site-logo">다시부르기: 가객의 앨범들</h1>
+                <div className="brand-mark header-brand">
+                    <span className="brand-dot" />
+                    <b>다시 부르기</b>
+                </div>
             </Link>
         </header>
     );
@@ -53,8 +55,6 @@ const AppBackground: React.FC = () => {
 const AppContent: React.FC = () => {
     return (
         <main className="app-main-content">
-            <div className="smoke-ambient"></div>
-
             <Routes>
                 <Route path="/" element={<AlbumCarousel />} />
                 <Route path="/lp" element={<LPPlayer />} />
