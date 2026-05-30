@@ -616,15 +616,18 @@
     overflow: hidden;
     aspect-ratio: 1;
     border: 1px solid rgba(34, 28, 21, 0.06);
+    position: relative;
 }
 .sleeve-cover-container .youtube-player-frame-outer {
-    width: 100%;
-    height: 100%;
-    border: none;
-    border-radius: 0;
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
     background: #1a1815;
 }
 .sleeve-cover-container .yt-iframe-embed {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
