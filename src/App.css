@@ -193,7 +193,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 4px 0 0;
+    margin: 4px 0 52px; /* bottom space for .titleplate that extends 62px below album */
     overflow: visible;
 }
 /* visual edge fade — pointer-events:none so album clicks pass through */
