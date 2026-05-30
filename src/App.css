@@ -1476,6 +1476,12 @@
 /* ------------------------------------------------
    FOOTER
    ------------------------------------------------ */
+
+/* hide footer on home page — home already has home-foot */
+.app-main-content:has(.home) ~ .site-footer {
+    display: none;
+}
+
 .site-footer {
     border-top: 1px solid var(--line);
     background: var(--paper-deep);
