@@ -26,16 +26,23 @@ export const AlbumCarousel: React.FC = () => {
     const { startMedia, resetPlayer } = useYTPlayer();
     const navigate = useNavigate();
     const [flowIndex, setFlowIndex] = useState(0);
+    const [chipOpen, setChipOpen] = useState(false);
 
     useEffect(() => {
         resetPlayer();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    // close chips whenever a different album moves to center
+    useEffect(() => {
+        setChipOpen(false);
+    }, [flowIndex]);
+
     useEffect(() => {
         const handler = (e: KeyboardEvent) => {
-            if (e.key === "ArrowLeft") setFlowIndex(i => (i - 1 + N) % N);
+            if (e.key === "ArrowLeft")  setFlowIndex(i => (i - 1 + N) % N);
             if (e.key === "ArrowRight") setFlowIndex(i => (i + 1) % N);
+            if (e.key === "Escape")     setChipOpen(false);
         };
         window.addEventListener("keydown", handler);
         return () => window.removeEventListener("keydown", handler);
@@ -72,7 +79,7 @@ export const AlbumCarousel: React.FC = () => {
 
             <div className="shelf-head">
                 <span className="eyebrow">가객의 앨범들</span>
-                <span className="shelf-hint">앨범을 클릭해 가운데로</span>
+                <span className="shelf-hint">클릭해 가운데로 · 가운데 앨범을 눌러 재생 선택</span>
             </div>
 
             <div className="flow">
@@ -84,9 +91,15 @@ export const AlbumCarousel: React.FC = () => {
                         return (
                             <div
                                 key={album.id}
-                                className={`alb${active ? " active" : ""}`}
+                                className={`alb${active ? " active" : ""}${active && chipOpen ? " chip-open" : ""}`}
                                 style={getAlbumStyle(i, flowIndex)}
-                                onClick={() => { if (!active) setFlowIndex(i); }}
+                                onClick={() => {
+                                    if (!active) {
+                                        setFlowIndex(i);
+                                    } else {
+                                        setChipOpen(v => !v);
+                                    }
+                                }}
                             >
                                 <div className="cover">
                                     <img
