@@ -31,6 +31,16 @@ export const AlbumCarousel: React.FC = () => {
     const [moving, setMoving] = useState(false);
     const moveTimerRef = useRef<number | null>(null);
 
+    const flowIndexRef = useRef(flowIndex);
+    const lastScrollTimeRef = useRef<number>(0);
+    const containerRef = useRef<HTMLDivElement | null>(null);
+    const touchStartXRef = useRef<number>(0);
+    const touchStartYRef = useRef<number>(0);
+
+    useEffect(() => {
+        flowIndexRef.current = flowIndex;
+    }, [flowIndex]);
+
     useEffect(() => {
         resetPlayer();
         return () => { if (moveTimerRef.current) clearTimeout(moveTimerRef.current); };
@@ -44,6 +54,85 @@ export const AlbumCarousel: React.FC = () => {
         };
         window.addEventListener("keydown", handler);
         return () => window.removeEventListener("keydown", handler);
+    }, []);
+
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const handleWheel = (e: WheelEvent) => {
+            const absX = Math.abs(e.deltaX);
+            const absY = Math.abs(e.deltaY);
+            
+            if (absX < 5 && absY < 5) return;
+
+            const now = Date.now();
+            if (now - lastScrollTimeRef.current < 450) {
+                e.preventDefault();
+                return;
+            }
+
+            const currentIdx = flowIndexRef.current;
+            let nextIndex = currentIdx;
+
+            if (absX > absY) {
+                if (e.deltaX > 0) nextIndex = (currentIdx + 1) % N;
+                else nextIndex = (currentIdx - 1 + N) % N;
+            } else {
+                if (e.deltaY > 0) nextIndex = (currentIdx + 1) % N;
+                else nextIndex = (currentIdx - 1 + N) % N;
+            }
+
+            if (nextIndex !== currentIdx) {
+                setFlowIndex(nextIndex);
+                setMoving(true);
+                if (moveTimerRef.current) clearTimeout(moveTimerRef.current);
+                moveTimerRef.current = window.setTimeout(() => setMoving(false), 720);
+                lastScrollTimeRef.current = now;
+            }
+            e.preventDefault();
+        };
+
+        const handleTouchStart = (e: TouchEvent) => {
+            touchStartXRef.current = e.touches[0].clientX;
+            touchStartYRef.current = e.touches[0].clientY;
+        };
+
+        const handleTouchEnd = (e: TouchEvent) => {
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+
+            const diffX = touchEndX - touchStartXRef.current;
+            const diffY = touchEndY - touchStartYRef.current;
+
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 20) {
+                const currentIdx = flowIndexRef.current;
+                let nextIndex = currentIdx;
+
+                if (diffX > 0) {
+                    nextIndex = (currentIdx - 1 + N) % N;
+                } else {
+                    nextIndex = (currentIdx + 1) % N;
+                }
+
+                if (nextIndex !== currentIdx) {
+                    setFlowIndex(nextIndex);
+                    setMoving(true);
+                    if (moveTimerRef.current) clearTimeout(moveTimerRef.current);
+                    moveTimerRef.current = window.setTimeout(() => setMoving(false), 720);
+                }
+            }
+        };
+
+        container.addEventListener("wheel", handleWheel, { passive: false });
+        container.addEventListener("touchstart", handleTouchStart, { passive: true });
+        container.addEventListener("touchend", handleTouchEnd, { passive: true });
+
+        return () => {
+            container.removeEventListener("wheel", handleWheel);
+            container.removeEventListener("touchstart", handleTouchStart);
+            container.removeEventListener("touchend", handleTouchEnd);
+        };
     }, []);
 
     const handleSelectMedia = (album: Album, media: "lp" | "cassette", e: React.MouseEvent) => {
@@ -69,17 +158,16 @@ export const AlbumCarousel: React.FC = () => {
                 <h1>넘기지 않고<br /><em>처음부터 끝까지</em> 듣는 일.</h1>
                 <p>
                     빨리 감기도, 다음 곡 버튼도 없습니다. LP의 바늘을 직접 내려놓고,
-                    카세트의 릴이 다 풀릴 때까지 — 김광석이 한 장에 담아 건넨 순서 그대로
-                    그의 목소리를 마주합니다.
+                    카세트의 릴이 다 풀릴 때까지 <br />
+                    김광석이 한 장에 담아 건넨 순서 그대로 그의 목소리를 마주합니다.
                 </p>
             </div>
 
             <div className="shelf-head">
                 <span className="eyebrow">가객의 앨범들</span>
-                <span className="shelf-hint">클릭해 가운데로 · 가운데 앨범을 눌러 재생 선택</span>
             </div>
 
-            <div className="flow">
+            <div className="flow" ref={containerRef}>
                 <div className="flow-track">
                     {ALBUMS.map((album, i) => {
                         let off = ((i - flowIndex) % N + N) % N;

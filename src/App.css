@@ -137,7 +137,7 @@
     font-family: var(--serif-ko);
     font-weight: 800;
     font-size: clamp(34px, 4vw, 52px);
-    line-height: 1.08;
+    line-height: 1.38;
     letter-spacing: -.01em;
     margin: 0 0 clamp(10px, 1.4vh, 20px);
 }
@@ -149,9 +149,11 @@
     font-size: clamp(14px, 1.2vw, 17px);
     line-height: 1.85;
     color: var(--ink-soft);
-    max-width: 52ch;
+    max-width: 100%;
     margin: 0;
     font-family: var(--body-ko);
+    word-break: keep-all;
+    overflow-wrap: break-word;
 }
 
 /* shelf head */
@@ -182,25 +184,6 @@
     justify-content: center;
     margin: 4px 0 52px; /* bottom space for .titleplate that extends 62px below album */
     overflow: visible;
-}
-/* visual edge fade — pointer-events:none so album clicks pass through */
-.flow::before,
-.flow::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 8%;
-    z-index: 200;
-    pointer-events: none;
-}
-.flow::before {
-    left: 0;
-    background: linear-gradient(to right, var(--paper), transparent);
-}
-.flow::after {
-    right: 0;
-    background: linear-gradient(to left, var(--paper), transparent);
 }
 .flow-track {
     position: relative;
@@ -1573,6 +1556,9 @@
     .flow-track { height: 250px; }
     .alb { width: 190px; height: 190px; }
     .home-foot { flex-direction: column; align-items: flex-start; gap: 4px; }
+
+    /* hero mobile adjustments */
+    .hero .eyebrow { letter-spacing: .25em; font-size: clamp(10px, 3.5vw, 12px); }
 }
 
 @media (max-width: 560px) {
