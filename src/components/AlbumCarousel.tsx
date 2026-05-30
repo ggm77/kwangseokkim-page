@@ -103,10 +103,12 @@ export const AlbumCarousel: React.FC = () => {
             const absX = Math.abs(e.deltaX);
             const absY = Math.abs(e.deltaY);
             
-            if (absX < 5 && absY < 5) return;
+            // Lowered threshold to trigger wheel scrolling earlier (from 5 to 2)
+            if (absX < 2 && absY < 2) return;
 
             const now = Date.now();
-            if (now - lastScrollTimeRef.current < 450) {
+            // Reduced cooldown throttling (from 450ms to 220ms) for high responsiveness
+            if (now - lastScrollTimeRef.current < 220) {
                 e.preventDefault();
                 return;
             }
@@ -144,7 +146,8 @@ export const AlbumCarousel: React.FC = () => {
             const diffX = touchEndX - touchStartXRef.current;
             const diffY = touchEndY - touchStartYRef.current;
 
-            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 20) {
+            // Lowered swipe distance requirement (from 20px to 10px) for quick swipes
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 10) {
                 const currentIdx = flowIndexRef.current;
                 let nextIndex = currentIdx;
 
