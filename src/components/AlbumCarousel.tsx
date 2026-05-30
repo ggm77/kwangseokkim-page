@@ -290,9 +290,6 @@ export const AlbumCarousel: React.FC = () => {
                 <span>
                     {String(flowIndex + 1).padStart(2, "0")} / {String(N).padStart(2, "0")} — {currentAlbum.title}
                 </span>
-                <span>
-                    GITHUB: <a href="https://github.com/ggm77" target="_blank" rel="noopener noreferrer" style={{ fontWeight: 'bold' }}>GGM77</a>
-                </span>
             </div>
         </div>
     );

@@ -75,7 +75,7 @@ function App() {
                     {/* Minimal footer */}
                     <footer className="site-footer">
                         <p className="copyright-text">
-                            Designed & Built by <a href="https://github.com/ggm77" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline', fontWeight: 'bold' }}>ggm77</a>
+                            Designed & Built as a Tribute Portfolio
                         </p>
                         <p className="legal-notes">
                             본 웹사이트는 故 김광석 님을 기리기 위해 제작된 비영리 팬/포트폴리오 프로젝트입니다.<br />
@@ -83,6 +83,9 @@ function App() {
                         </p>
                         <p className="contact-email">
                             문의 및 피드백 : <a href="mailto:shm040806@gmail.com">shm040806@gmail.com</a>
+                        </p>
+                        <p className="github-link" style={{ fontSize: '11px', marginTop: '8px', color: 'var(--ink-faint)', opacity: 0.8 }}>
+                            GitHub: <a href="https://github.com/ggm77" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline' }}>ggm77</a>
                         </p>
                     </footer>
                 </div>
