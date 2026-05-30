@@ -71,10 +71,11 @@ export const AlbumCarousel: React.FC = () => {
     }, []);
 
     const flowIndexRef = useRef(flowIndex);
-    const lastScrollTimeRef = useRef<number>(0);
     const containerRef = useRef<HTMLDivElement | null>(null);
     const touchStartXRef = useRef<number>(0);
     const touchStartYRef = useRef<number>(0);
+    const isScrollingRef = useRef<boolean>(false);
+    const scrollTimeoutRef = useRef<number | null>(null);
 
     useEffect(() => {
         flowIndexRef.current = flowIndex;
@@ -82,7 +83,10 @@ export const AlbumCarousel: React.FC = () => {
 
     useEffect(() => {
         resetPlayer();
-        return () => { if (moveTimerRef.current) clearTimeout(moveTimerRef.current); };
+        return () => { 
+            if (moveTimerRef.current) clearTimeout(moveTimerRef.current);
+            if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -103,13 +107,22 @@ export const AlbumCarousel: React.FC = () => {
             const absX = Math.abs(e.deltaX);
             const absY = Math.abs(e.deltaY);
             
+            // Treat extremely small movements as gesture finished or idle
+            if (absX < 1 && absY < 1) {
+                isScrollingRef.current = false;
+                return;
+            }
+
             // Adjusted threshold to trigger wheel scrolling at delta 3
             if (absX < 3 && absY < 3) return;
 
-            const now = Date.now();
-            // Reduced cooldown throttling (from 450ms to 220ms) for high responsiveness
-            if (now - lastScrollTimeRef.current < 220) {
+            // If we are currently in a scroll gesture lock, ignore and refresh the timeout
+            if (isScrollingRef.current) {
                 e.preventDefault();
+                if (scrollTimeoutRef.current) window.clearTimeout(scrollTimeoutRef.current);
+                scrollTimeoutRef.current = window.setTimeout(() => {
+                    isScrollingRef.current = false;
+                }, 150);
                 return;
             }
 
@@ -129,7 +142,13 @@ export const AlbumCarousel: React.FC = () => {
                 setMoving(true);
                 if (moveTimerRef.current) clearTimeout(moveTimerRef.current);
                 moveTimerRef.current = window.setTimeout(() => setMoving(false), 720);
-                lastScrollTimeRef.current = now;
+                
+                // Lock the scroll gesture
+                isScrollingRef.current = true;
+                if (scrollTimeoutRef.current) window.clearTimeout(scrollTimeoutRef.current);
+                scrollTimeoutRef.current = window.setTimeout(() => {
+                    isScrollingRef.current = false;
+                }, 150);
             }
             e.preventDefault();
         };
