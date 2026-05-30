@@ -38,6 +38,7 @@ export const CassettePlayer: React.FC = () => {
     const [isREW, setIsREW] = useState<boolean>(false);
     const [playIntent, setPlayIntent] = useState<boolean>(false);
     const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth <= 800);
+    const [viewSide, setViewSide] = useState<"A" | "B">(currentSide || "A");
 
     // Keep a ref to the latest play function so setTimeout always calls the current version
     const playRef = useRef(play);
@@ -89,10 +90,11 @@ export const CassettePlayer: React.FC = () => {
         durationRef.current = duration;
     }, [duration]);
 
-    // Sync isFlipped with currentSide
+    // Sync isFlipped and viewSide with currentSide
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing local isFlipped to the external store's currentSide
         setIsFlipped(currentSide === "B");
+        setViewSide(currentSide || "A");
     }, [currentSide]);
 
     const tracksList = currentSide === "A" ? activeAlbum?.tracksSideA : activeAlbum?.tracksSideB;
@@ -343,7 +345,11 @@ export const CassettePlayer: React.FC = () => {
 
             <div className="player-main-layout">
                 {/* Left: Disguised Youtube Iframe (The "Album Sleeve") */}
-                <AlbumSleeve activeAlbum={activeAlbum} currentSide={currentSide} />
+                <AlbumSleeve 
+                    activeAlbum={activeAlbum} 
+                    currentSide={viewSide} 
+                    onSleeveClick={() => setViewSide(viewSide === 'A' ? 'B' : 'A')}
+                />
 
                 {/* Right/Center: Large Interactive Cassette Player */}
                 <div className="player-column">
