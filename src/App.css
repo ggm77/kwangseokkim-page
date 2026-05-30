@@ -354,10 +354,10 @@
     background-position: center center;
     filter: blur(90px) saturate(3.2) brightness(0.7) contrast(1.15);
     transform-origin: center center;
-    animation: slowBgRotate 30s linear infinite;
+    animation: slowBgRotate 20s linear infinite;
 }
 .player-bg--playing .player-bg-image {
-    animation: slowBgRotatePlaying 30s linear infinite, ambientPulse 12s ease-in-out infinite alternate;
+    animation: slowBgRotatePlaying 20s linear infinite, ambientPulse 12s ease-in-out infinite alternate;
 }
 
 @keyframes slowBgRotate {
