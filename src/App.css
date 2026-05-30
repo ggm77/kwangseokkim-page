@@ -38,13 +38,13 @@
 }
 
 .site-header.scrolled {
-    background: rgba(231, 222, 203, 0.94);
+    background: rgba(23, 20, 18, 0.94);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--line);
     transform: translateY(0);
     opacity: 1;
     pointer-events: auto;
-    box-shadow: 0 4px 24px rgba(34,28,21,0.08);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.25);
 }
 
 .header-brand {
@@ -380,7 +380,7 @@
 .player-bg-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(231, 222, 203, 0.62);
+    background: rgba(23, 20, 18, 0.62);
 }
 
 /* ------------------------------------------------

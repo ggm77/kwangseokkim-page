@@ -1,51 +1,51 @@
 @import url('https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Serif+KR:wght@400;500;600&family=Spectral:ital,wght@0,400;0,500;0,700;1,400&family=DM+Mono:wght@400;500&display=swap');
 
 :root {
-  /* paper + ink */
-  --paper:       #E7DECB;
-  --paper-deep:  #DCD1B8;
-  --paper-edge:  #CFC2A4;
-  --ink:         #221C15;
-  --ink-soft:    #564C3D;
-  --ink-faint:   #8C8270;
-  --line:        rgba(34,28,21,0.16);
-  --line-soft:   rgba(34,28,21,0.08);
+  /* paper + ink (Redefined for Premium Dark-Dusk Mode) */
+  --paper:       #161311;       /* Deep matte carbon-charcoal */
+  --paper-deep:  #0E0C0A;       /* Even darker shadows */
+  --paper-edge:  #231E1B;       /* Dark wood-brown edges */
+  --ink:         #F5EFE6;       /* Warm linen white text */
+  --ink-soft:    #C5B9AA;       /* Elegant soft sand text */
+  --ink-faint:   #8D8072;       /* Weathered wood text */
+  --line:        rgba(245,239,230,0.14);
+  --line-soft:   rgba(245,239,230,0.06);
 
-  /* materials */
-  --card:        #F2EAD8;
-  --card-edge:   #E4D9BF;
+  /* materials (Redefined to keep physical look and feel) */
+  --card:        #EADFCD;       /* Warm cream sleeve paper (keeps physical contrast!) */
+  --card-edge:   #DCD1B8;
   --kraft:       #B79A6C;
 
   /* dusk accents */
-  --persimmon:   #B14E26;
-  --persimmon-d: #8F3C1A;
-  --gold:        #B98A3C;
+  --persimmon:   #E06B35;       /* Elevated brighter persimmon for visibility in dark mode */
+  --persimmon-d: #B14E26;
+  --gold:        #D0A45B;       /* Brighter retro gold */
 
   /* legacy aliases — keeps App.css var() refs working */
   --font-sans:    "Noto Serif KR", serif;
   --font-serif:   "Nanum Myeongjo", serif;
   --font-mono:    "DM Mono", monospace;
-  --bg-page:      #E7DECB;
-  --bg-deck:      #DCD1B8;
-  --bg-panel:     rgba(242, 234, 216, 0.85);
+  --bg-page:      #161311;
+  --bg-deck:      #0E0C0A;
+  --bg-panel:     rgba(35, 30, 27, 0.85);
   --border-brass: #B79A6C;
-  --accent-gold:  #B14E26;
+  --accent-gold:  #E06B35;
   --wood-warm:    #B79A6C;
-  --text-primary: #564C3D;
-  --text-muted:   #8C8270;
-  --text-bright:  #221C15;
-  --shadow-soft:  0 12px 40px -8px rgba(34,28,21,0.15);
-  --shadow-inset: inset 0 2px 6px 0 rgba(34,28,21,0.10);
-  --shadow-1:     0 1px 2px rgba(34,28,21,.10);
-  --shadow-2:     0 18px 50px -20px rgba(34,28,21,.55);
-  --shadow-3:     0 40px 90px -30px rgba(34,28,21,.6);
+  --text-primary: #C5B9AA;
+  --text-muted:   #8D8072;
+  --text-bright:  #F5EFE6;
+  --shadow-soft:  0 12px 40px -8px rgba(0,0,0,0.5);
+  --shadow-inset: inset 0 2px 6px 0 rgba(0,0,0,0.4);
+  --shadow-1:     0 1px 2px rgba(0,0,0,.3);
+  --shadow-2:     0 18px 50px -20px rgba(0,0,0,.7);
+  --shadow-3:     0 40px 90px -30px rgba(0,0,0,.85);
 
   --serif-ko: "Nanum Myeongjo", serif;
   --body-ko:  "Noto Serif KR", serif;
   --serif-la: "Spectral", serif;
   --mono:     "DM Mono", monospace;
 
-  color-scheme: light;
+  color-scheme: dark;
   font-family: var(--body-ko);
   background-color: var(--paper);
   color: var(--ink);
@@ -66,12 +66,12 @@ html, body {
 
 body {
   background:
-    /* Premium warm gallery spotlight centered on the carousel */
-    radial-gradient(100% 80% at 50% 50%, rgba(255, 252, 243, 0.82) 0%, rgba(231, 222, 203, 0.25) 60%, transparent 100%),
+    /* Elegant warm gallery spotlight to emphasize the front album */
+    radial-gradient(100% 80% at 50% 50%, rgba(224, 107, 53, 0.12) 0%, rgba(22, 19, 17, 0) 70%, transparent 100%),
     /* Top ambient lighting */
-    radial-gradient(120% 90% at 50% -10%, rgba(255, 247, 228, 0.85), transparent 55%),
-    /* Soft ground shadow vignette */
-    radial-gradient(140% 100% at 50% 110%, rgba(70, 55, 40, 0.25), transparent 60%),
+    radial-gradient(120% 90% at 50% -10%, rgba(255, 255, 255, 0.04), transparent 60%),
+    /* Ground shadow vignette */
+    radial-gradient(140% 100% at 50% 120%, rgba(0, 0, 0, 0.65), transparent 70%),
     var(--paper);
   min-height: 100vh;
   text-rendering: optimizeLegibility;
