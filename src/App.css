@@ -455,7 +455,7 @@
     display: grid;
     grid-template-columns: minmax(200px, 380px) auto;
     gap: 36px;
-    align-items: stretch;
+    align-items: start;
 }
 
 /* Sleeve Column */
@@ -478,8 +478,8 @@
 /* 3D Flip Sleeve */
 .modern-sleeve-container {
     perspective: 1200px;
-    height: 100%;
-    aspect-ratio: 0.647;
+    width: 350px;
+    height: 580px;
     margin: 0 auto;
     transition: transform 0.3s ease;
 }
@@ -1568,9 +1568,8 @@
     }
     .modern-sleeve-container {
         width: 100%;
-        height: auto;
-        aspect-ratio: 0.647;
-        max-width: 380px;
+        max-width: 340px;
+        height: 560px;
         margin: 0 auto;
     }
     .player-column { order: 1; }
