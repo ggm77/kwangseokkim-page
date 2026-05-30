@@ -350,10 +350,6 @@ export const CassettePlayer: React.FC = () => {
                     <div className="cassette-deck-outer">
                         <div className="deck-header">
                             <span className="brand-logo font-retro">DIRECT DRIVE / HI-FI</span>
-                            <div className="counter-led">
-                                {Math.floor(currentTime / 60).toString().padStart(2, "0")}:
-                                {Math.floor(currentTime % 60).toString().padStart(2, "0")}
-                            </div>
                         </div>
 
                         {/* The 3D Rotating Cassette Tape */}

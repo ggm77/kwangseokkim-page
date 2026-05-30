@@ -1,155 +1,129 @@
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
-@import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Serif+KR:wght@400;500;600&family=Spectral:ital,wght@0,400;0,500;0,700;1,400&family=DM+Mono:wght@400;500&display=swap');
 
 :root {
-    --font-sans: 'Pretendard Variable', 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
-    --font-serif: 'Gowun Batang', Georgia, serif;
-    --font-mono: 'IBM Plex Mono', monospace;
+  /* paper + ink */
+  --paper:       #E7DECB;
+  --paper-deep:  #DCD1B8;
+  --paper-edge:  #CFC2A4;
+  --ink:         #221C15;
+  --ink-soft:    #564C3D;
+  --ink-faint:   #8C8270;
+  --line:        rgba(34,28,21,0.16);
+  --line-soft:   rgba(34,28,21,0.08);
 
-    /* Warm Wood-Tone Vintage Palette */
-    --bg-page: #f3e9d7;
-    --bg-deck: #e5d4b8;
-    --bg-panel: rgba(243, 233, 215, 0.85);
+  /* materials */
+  --card:        #F2EAD8;
+  --card-edge:   #E4D9BF;
+  --kraft:       #B79A6C;
 
-    --border-brass: #8b5c2a;
-    --accent-gold: #b07533;
-    --wood-warm: #8b5c2a;
+  /* dusk accents */
+  --persimmon:   #B14E26;
+  --persimmon-d: #8F3C1A;
+  --gold:        #B98A3C;
 
-    --text-primary: #4a3728;
-    --text-muted: #8a7060;
-    --text-bright: #2e1c0e;
+  /* legacy aliases — keeps App.css var() refs working */
+  --font-sans:    "Noto Serif KR", serif;
+  --font-serif:   "Nanum Myeongjo", serif;
+  --font-mono:    "DM Mono", monospace;
+  --bg-page:      #E7DECB;
+  --bg-deck:      #DCD1B8;
+  --bg-panel:     rgba(242, 234, 216, 0.85);
+  --border-brass: #B79A6C;
+  --accent-gold:  #B14E26;
+  --wood-warm:    #B79A6C;
+  --text-primary: #564C3D;
+  --text-muted:   #8C8270;
+  --text-bright:  #221C15;
+  --shadow-soft:  0 12px 40px -8px rgba(34,28,21,0.15);
+  --shadow-inset: inset 0 2px 6px 0 rgba(34,28,21,0.10);
+  --shadow-1:     0 1px 2px rgba(34,28,21,.10);
+  --shadow-2:     0 18px 50px -20px rgba(34,28,21,.55);
+  --shadow-3:     0 40px 90px -30px rgba(34,28,21,.6);
 
-    --shadow-soft: 0 12px 40px -8px rgba(139, 92, 42, 0.15);
-    --shadow-inset: inset 0 2px 6px 0 rgba(139, 92, 42, 0.10);
+  --serif-ko: "Nanum Myeongjo", serif;
+  --body-ko:  "Noto Serif KR", serif;
+  --serif-la: "Spectral", serif;
+  --mono:     "DM Mono", monospace;
 
-    color-scheme: light;
-    font-family: var(--font-sans);
-    background-color: #faf3e8;
-    color: var(--text-primary);
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+  color-scheme: light;
+  font-family: var(--body-ko);
+  background-color: var(--paper);
+  color: var(--ink);
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 html, body {
-    margin: 0;
-    padding: 0;
-    max-width: 100%;
-    overflow-x: hidden;
-    position: relative;
+  margin: 0;
+  padding: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+  position: relative;
 }
 
 body {
-    background-color: #faf3e8;
-    min-height: 100vh;
+  background:
+    radial-gradient(120% 90% at 50% -10%, rgba(255,247,228,.7), transparent 55%),
+    radial-gradient(150% 120% at 50% 120%, rgba(60,48,34,.22), transparent 60%),
+    var(--paper);
+  min-height: 100vh;
+  text-rendering: optimizeLegibility;
 }
 
-* {
-    box-sizing: border-box;
+/* film grain overlay */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: .05;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+* { box-sizing: border-box; }
+
+h1, h2, h3, h4 {
+  font-family: var(--serif-ko);
+  font-weight: 700;
+  color: var(--ink);
 }
 
 /* Custom Scrollbar */
-::-webkit-scrollbar {
-    width: 8px;
-}
-::-webkit-scrollbar-track {
-    background: var(--bg-page);
-}
-::-webkit-scrollbar-thumb {
-    background: #c4b098;
-    border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: var(--border-brass);
-}
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--paper); }
+::-webkit-scrollbar-thumb { background: var(--ink-faint); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--kraft); }
 
-/* Typography */
-h1, h2, h3, h4 {
-    font-family: var(--font-serif);
-    font-weight: 700;
-    color: var(--text-bright);
-}
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; }
 
 .font-retro {
-    font-family: var(--font-mono);
-    letter-spacing: 0.1em;
-}
-
-/* Ambient Visuals — warm glow instead of smoke */
-.smoke-ambient {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
-    z-index: 0;
-    background: radial-gradient(ellipse at 50% 30%, rgba(245, 220, 180, 0.25), transparent 70%);
-}
-
-.retro-grid-floor {
-    display: none; /* Not needed in bright theme */
-}
-
-/* Universal Retro Buttons */
-.retro-btn {
-    background: #fff;
-    border: 1px solid var(--border-brass);
-    color: var(--text-primary);
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-family: var(--font-sans);
-    font-weight: 500;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
-    box-shadow: 0 2px 8px rgba(80, 50, 20, 0.08);
-}
-
-.retro-btn:hover {
-    background: var(--accent-gold);
-    color: #fff;
-    box-shadow: 0 4px 16px rgba(176, 117, 51, 0.30);
+  font-family: var(--mono);
+  letter-spacing: 0.1em;
 }
 
 /* Global Keyframes */
 @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
 }
 
 @keyframes spin-reverse {
-    from { transform: rotate(360deg); }
-    to { transform: rotate(0deg); }
-}
-
-@keyframes ejectUp {
-    0% {
-        transform: translateY(0) scale(1) rotateY(0);
-        opacity: 1;
-    }
-    40% {
-        transform: translateY(-160px) scale(0.95) rotateY(90deg);
-        opacity: 0.7;
-    }
-    60% {
-        transform: translateY(-160px) scale(0.95) rotateY(270deg);
-        opacity: 0.7;
-    }
-    100% {
-        transform: translateY(0) scale(1) rotateY(360deg);
-        opacity: 1;
-    }
+  from { transform: rotate(360deg); }
+  to   { transform: rotate(0deg); }
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(16px); }
-    to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes playerFadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }

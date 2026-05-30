@@ -1,18 +1,49 @@
-import React, { useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ALBUMS } from "../data/albums";
 import type { Album } from "../data/albums";
 import { useYTPlayer } from "./YTPlayerStore";
 
+const N = ALBUMS.length;
+
+function getAlbumStyle(i: number, flowIndex: number): React.CSSProperties {
+    let off = ((i - flowIndex) % N + N) % N;
+    if (off > N / 2) off -= N;
+    const abs = Math.abs(off);
+    const x = off * 198;
+    const rot = off === 0 ? 0 : off < 0 ? 40 : -40;
+    const scale = off === 0 ? 1.1 : 1 - Math.min(abs, 3) * 0.08;
+    // abs >= 3: the "opposite" album — hide it
+    const hidden = abs >= 3;
+    return {
+        transform: `translate(-50%,-50%) translateX(${x}px) perspective(2200px) rotateY(${rot}deg) scale(${scale})`,
+        opacity: hidden ? 0 : 1,
+        zIndex: 100 - abs,
+        filter: off === 0 ? "none" : `brightness(${0.8 - abs * 0.06})`,
+        pointerEvents: hidden ? "none" : "auto",
+    };
+}
+
 export const AlbumCarousel: React.FC = () => {
     const { startMedia, resetPlayer } = useYTPlayer();
     const navigate = useNavigate();
+    const [flowIndex, setFlowIndex] = useState(0);
+    const [moving, setMoving] = useState(false);
+    const moveTimerRef = useRef<number | null>(null);
 
     useEffect(() => {
-        // Stop playing when the user returns to the main page
-        // (e.g., via browser's back button)
         resetPlayer();
+        return () => { if (moveTimerRef.current) clearTimeout(moveTimerRef.current); };
         // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    useEffect(() => {
+        const handler = (e: KeyboardEvent) => {
+            if (e.key === "ArrowLeft")  setFlowIndex(i => (i - 1 + N) % N);
+            if (e.key === "ArrowRight") setFlowIndex(i => (i + 1) % N);
+        };
+        window.addEventListener("keydown", handler);
+        return () => window.removeEventListener("keydown", handler);
     }, []);
 
     const handleSelectMedia = (album: Album, media: "lp" | "cassette", e: React.MouseEvent) => {
@@ -21,138 +52,114 @@ export const AlbumCarousel: React.FC = () => {
         navigate(`/${media}`);
     };
 
+    const currentAlbum = ALBUMS[flowIndex];
+
     return (
-        <div className="home-section">
-            {/* Hero Title Area — matching design/home.png */}
-            <div className="home-hero">
-                <p className="hero-subtitle">ALBUM BY ALBUM</p>
-                <h1 className="hero-title">다시부르기: 가객의 앨범</h1>
-                <p className="hero-desc">
-                    노래 한 곡만 듣고 넘기기엔 그가 남긴 위로가 너무나 깊습니다.<br /><br />
-                    LP와 카세트테이프의 온기를 빌려,<br />
-                    김광석이 처음 들려주고 싶었던 앨범 전체의 이야기를<br />
-                    온전히 경험해 보세요.
+        <div className="home">
+            <div className="home-top">
+                <div className="brand-mark">
+                    <b>다시부르기: 가객의 앨범들</b>
+                </div>
+                <div className="meta">KIM KWANG-SEOK · ANALOG ARCHIVE</div>
+            </div>
+
+            <div className="hero">
+                <span className="eyebrow">곡이 아니라, 한 장의 시간을</span>
+                <div className="rule" />
+                <h1>넘기지 않고<br /><em>처음부터 끝까지</em> 듣는 일.</h1>
+                <p>
+                    빨리 감기도, 다음 곡 버튼도 없습니다. LP의 바늘을 직접 내려놓고,
+                    카세트의 릴이 다 풀릴 때까지 — 김광석이 한 장에 담아 건넨 순서 그대로
+                    그의 목소리를 마주합니다.
                 </p>
             </div>
 
-            {/* 3x2 Album Grid — matching design/home.png */}
-            <div className="album-grid">
-                {ALBUMS.map((album) => (
-                    <div
-                        key={album.id}
-                        className="album-grid-item"
-                        onClick={(e) => handleSelectMedia(album, "lp", e)}
-                    >
-                        {/* Album Cover Card */}
-                        <div className="album-cover-stack">
-                            {/* Main LP Sleeve (Image Wrapper) */}
-                            <div 
-                                className="lp-sleeve-card"
-                                style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    display: "flex",
-                                    justifyContent: "center",
-                                    alignItems: "center",
-                                    overflow: "hidden",
-                                    borderRadius: "4px"
-                                }}
-                            >
-                                <img 
-                                    src={`https://img.youtube.com/vi/${album.tracksSideA[0].youtubeId}/hqdefault.jpg`} 
-                                    alt={album.title} 
-                                    style={{
-                                        width: "100%",
-                                        height: "100%",
-                                        objectFit: "cover",
-                                        transform: `scale(${album.coverScale || 1.34}) translateY(${album.coverOffsetY || '0px'})`
-                                    }}
-                                />
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '8px',
-                                    left: '8px',
-                                    backgroundColor: 'rgba(20, 15, 10, 0.75)',
-                                    backdropFilter: 'blur(4px)',
-                                    color: 'rgba(255, 255, 255, 0.95)',
-                                    padding: '4px 8px',
-                                    borderRadius: '12px',
-                                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                                    zIndex: 1,
-                                    display: 'flex',
-                                    gap: '4px',
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                    fontFamily: 'var(--font-mono, monospace)',
-                                    fontSize: '10px',
-                                    fontWeight: 600,
-                                    letterSpacing: '0.05em'
-                                }}>
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <circle cx="12" cy="12" r="10"></circle>
-                                        <circle cx="12" cy="12" r="3"></circle>
-                                    </svg>
-                                    <span>LP</span>
-                                </div>
-                            </div>
-                            
-                            {/* Mini Cassette thumbnail — overlapping */}
-                            <div 
-                                className="cassette-mini-card" 
-                                onClick={(e) => handleSelectMedia(album, "cassette", e)}
-                            >
-                                <div className="cassette-mini-inner" style={{ borderTopColor: album.coverColor }}>
-                                    {/* Album Cover Background for Cassette */}
-                                    <div style={{
-                                        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                                        backgroundImage: `url(https://img.youtube.com/vi/${album.tracksSideA[0].youtubeId}/hqdefault.jpg)`,
-                                        backgroundSize: 'cover',
-                                        backgroundPosition: 'center',
-                                        opacity: 0.85,
-                                        transform: `scale(${album.coverScale || 1.34}) translateY(${album.coverOffsetY || '0px'})`
-                                    }} />
-                                    
-                                    {/* Format Indicator Badge */}
-                                    <div style={{
-                                        position: 'absolute',
-                                        bottom: 0, left: 0, right: 0,
-                                        backgroundColor: 'rgba(20, 15, 10, 0.85)',
-                                        backdropFilter: 'blur(4px)',
-                                        color: 'rgba(255, 255, 255, 0.95)',
-                                        fontSize: '10px',
-                                        fontFamily: 'var(--font-mono, monospace)',
-                                        fontWeight: 600,
-                                        letterSpacing: '0.15em',
-                                        padding: '5px 0',
-                                        display: 'flex',
-                                        justifyContent: 'center',
-                                        alignItems: 'center',
-                                        gap: '6px',
-                                        zIndex: 5,
-                                        borderBottomLeftRadius: '3px',
-                                        borderBottomRightRadius: '3px',
-                                        borderTop: '1px solid rgba(255,255,255,0.1)'
-                                    }}>
-                                        <svg width="12" height="8" viewBox="0 0 24 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <rect x="2" y="2" width="20" height="12" rx="2" />
-                                            <circle cx="8" cy="8" r="2" />
-                                            <circle cx="16" cy="8" r="2" />
-                                        </svg>
-                                        CASSETTE
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {/* Album Info */}
-                        <div className="album-grid-info">
-                            <h3 className="album-grid-title">{album.title}</h3>
-                            <p className="album-grid-year">{album.year}</p>
-                        </div>
-                    </div>
-                ))}
+            <div className="shelf-head">
+                <span className="eyebrow">가객의 앨범들</span>
+                <span className="shelf-hint">클릭해 가운데로 · 가운데 앨범을 눌러 재생 선택</span>
             </div>
 
+            <div className="flow">
+                <div className="flow-track">
+                    {ALBUMS.map((album, i) => {
+                        let off = ((i - flowIndex) % N + N) % N;
+                        if (off > N / 2) off -= N;
+                        const active = off === 0;
+                        return (
+                            <div
+                                key={album.id}
+                                className={`alb${active ? " active" : ""}${active && moving ? " moving" : ""}`}
+                                style={getAlbumStyle(i, flowIndex)}
+                                onClick={() => {
+                                    if (!active) {
+                                        setFlowIndex(i);
+                                        setMoving(true);
+                                        if (moveTimerRef.current) clearTimeout(moveTimerRef.current);
+                                        moveTimerRef.current = window.setTimeout(() => setMoving(false), 720);
+                                    }
+                                }}
+                            >
+                                <div className="cover">
+                                    <img
+                                        src={`https://img.youtube.com/vi/${album.tracksSideA[0].youtubeId}/hqdefault.jpg`}
+                                        alt={album.title}
+                                        style={{
+                                            width: "100%",
+                                            height: "100%",
+                                            objectFit: "cover",
+                                            transform: `scale(${album.coverScale || 1.34}) translateY(${album.coverOffsetY || "0px"})`,
+                                        }}
+                                    />
+                                </div>
+                                <div className="media">
+                                    <button
+                                        className="media-chip"
+                                        onClick={(e) => handleSelectMedia(album, "lp", e)}
+                                    >
+                                        <LPIcon />
+                                        <span>LP</span>
+                                        <small>턴테이블</small>
+                                    </button>
+                                    <button
+                                        className="media-chip"
+                                        onClick={(e) => handleSelectMedia(album, "cassette", e)}
+                                    >
+                                        <TapeIcon />
+                                        <span>Tape</span>
+                                        <small>카세트</small>
+                                    </button>
+                                </div>
+                                <div className="spine-year">{album.year}</div>
+                                <div className="titleplate">{album.title}</div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
 
+            <div className="home-foot">
+                <span>
+                    {String(flowIndex + 1).padStart(2, "0")} / {String(N).padStart(2, "0")} — {currentAlbum.title}
+                </span>
+                <span>LP · CASSETTE TAPE — 매체를 골라 재생을 시작하세요</span>
+            </div>
         </div>
     );
 };
+
+const LPIcon = () => (
+    <svg className="ic" viewBox="0 0 40 40" fill="none">
+        <circle cx="20" cy="20" r="17" stroke="currentColor" strokeWidth="1.5" />
+        <circle cx="20" cy="20" r="9" stroke="currentColor" strokeWidth="1" />
+        <circle cx="20" cy="20" r="3.5" fill="currentColor" />
+    </svg>
+);
+
+const TapeIcon = () => (
+    <svg className="ic" viewBox="0 0 40 40" fill="none">
+        <rect x="3" y="9" width="34" height="22" rx="3" stroke="currentColor" strokeWidth="1.5" />
+        <circle cx="14" cy="22" r="4.5" stroke="currentColor" strokeWidth="1.5" />
+        <circle cx="26" cy="22" r="4.5" stroke="currentColor" strokeWidth="1.5" />
+        <path d="M18.5 22h3" stroke="currentColor" strokeWidth="1" />
+    </svg>
+);
