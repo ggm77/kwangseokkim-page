@@ -260,7 +260,7 @@ export const CassettePlayer: React.FC = () => {
                         <span className="side-indicator font-retro">{sideName}</span>
                         <div className="sticker-titles">
                             <div className="song-title">{activeAlbum.title}</div>
-                            <div className="album-title-sticker">김광석 (Kim Kwang-seok)</div>
+                            <div className="album-title-sticker">김광석 <span className="eng-name">(Kim Kwang-seok)</span></div>
                         </div>
                         <span className="dolby-logo">DO DO[BY SYSTEM]</span>
                     </div>
