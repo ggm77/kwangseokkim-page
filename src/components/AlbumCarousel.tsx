@@ -58,8 +58,7 @@ export const AlbumCarousel: React.FC = () => {
         <div className="home">
             <div className="home-top">
                 <div className="brand-mark">
-                    <span className="brand-dot" />
-                    <b>다시 부르기</b>
+                    <b>다시부르기: 가객의 앨범들</b>
                 </div>
                 <div className="meta">KIM KWANG-SEOK · ANALOG ARCHIVE</div>
             </div>
