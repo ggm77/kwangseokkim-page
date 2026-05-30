@@ -12,10 +12,10 @@ function getAlbumStyle(i: number, flowIndex: number): React.CSSProperties {
     const abs = Math.abs(off);
     const x = off * 198;
     const rot = off === 0 ? 0 : off < 0 ? 40 : -40;
-    const z = -abs * 200;
     const scale = off === 0 ? 1.1 : 1 - Math.min(abs, 3) * 0.08;
+    // no translateZ — keeps all albums in z=0 plane so pointer-events work correctly
     return {
-        transform: `translate(-50%,-50%) translateX(${x}px) translateZ(${z}px) rotateY(${rot}deg) scale(${scale})`,
+        transform: `translate(-50%,-50%) translateX(${x}px) rotateY(${rot}deg) scale(${scale})`,
         opacity: 1,
         zIndex: 100 - abs,
         filter: off === 0 ? "none" : `brightness(${0.8 - abs * 0.06})`,
@@ -32,11 +32,6 @@ export const AlbumCarousel: React.FC = () => {
         resetPlayer();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
-
-    // close chips whenever a different album moves to center
-    useEffect(() => {
-        setChipOpen(false);
-    }, [flowIndex]);
 
     useEffect(() => {
         const handler = (e: KeyboardEvent) => {
@@ -95,7 +90,9 @@ export const AlbumCarousel: React.FC = () => {
                                 style={getAlbumStyle(i, flowIndex)}
                                 onClick={() => {
                                     if (!active) {
+                                        // center the album AND open the media chips in one click
                                         setFlowIndex(i);
+                                        setChipOpen(true);
                                     } else {
                                         setChipOpen(v => !v);
                                     }
