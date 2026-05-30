@@ -6,21 +6,53 @@ import { useYTPlayer } from "./YTPlayerStore";
 
 const N = ALBUMS.length;
 
-function getAlbumStyle(i: number, flowIndex: number): React.CSSProperties {
+function getAlbumStyle(i: number, flowIndex: number, windowWidth: number): React.CSSProperties {
     let off = ((i - flowIndex) % N + N) % N;
     if (off > N / 2) off -= N;
     const abs = Math.abs(off);
-    const x = off * 198;
-    const rot = off === 0 ? 0 : off < 0 ? 40 : -40;
-    const scale = off === 0 ? 1.1 : 1 - Math.min(abs, 3) * 0.08;
-    // abs >= 3: the "opposite" album — hide it
-    const hidden = abs >= 3;
+
+    // Calculate 3D circular radius based on window width (wider circles on wide screens)
+    let radius = 280;
+    if (windowWidth > 1800) {
+        radius = 560;
+    } else if (windowWidth > 1500) {
+        radius = 480;
+    } else if (windowWidth > 1200) {
+        radius = 380;
+    } else if (windowWidth > 800) {
+        radius = 280;
+    } else {
+        radius = 180; // Mobile
+    }
+
+    // Spread albums horizontally using a dedicated spacing angle so they don't overlap completely
+    const angle = off * 42;
+    
+    // Scale down slightly as they move further back
+    const scale = off === 0 ? 1.05 : 1 - abs * 0.08;
+    
+    // Depth of field filters (brightness and blur) for realistic 3D feel
+    let filter = "none";
+    let opacity = 1;
+    if (abs === 1) {
+        filter = "brightness(0.75) contrast(0.9)";
+        opacity = 0.85;
+    } else if (abs === 2) {
+        filter = "brightness(0.45) contrast(0.8) blur(1px)";
+        opacity = 0.5;
+    } else if (abs === 3) {
+        filter = "brightness(0.2) blur(2px)";
+        opacity = 0.2;
+    }
+
     return {
-        transform: `translate(-50%,-50%) translateX(${x}px) perspective(2200px) rotateY(${rot}deg) scale(${scale})`,
-        opacity: hidden ? 0 : 1,
+        // rotateY(${angle}deg) translateZ(${radius}px) places them in a 3D circle.
+        // The second rotateY(${-angle}deg) counter-rotates each album so it always faces perfectly front.
+        transform: `translate(-50%,-50%) rotateY(${angle}deg) translateZ(${radius}px) rotateY(${-angle}deg) scale(${scale})`,
+        opacity: opacity,
         zIndex: 100 - abs,
-        filter: off === 0 ? "none" : `brightness(${0.8 - abs * 0.06})`,
-        pointerEvents: hidden ? "none" : "auto",
+        filter: filter,
+        pointerEvents: abs >= 2 ? "none" : "auto",
     };
 }
 
@@ -30,6 +62,13 @@ export const AlbumCarousel: React.FC = () => {
     const [flowIndex, setFlowIndex] = useState(0);
     const [moving, setMoving] = useState(false);
     const moveTimerRef = useRef<number | null>(null);
+    const [windowWidth, setWindowWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1200);
+
+    useEffect(() => {
+        const handleResize = () => setWindowWidth(window.innerWidth);
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     const flowIndexRef = useRef(flowIndex);
     const lastScrollTimeRef = useRef<number>(0);
@@ -177,7 +216,7 @@ export const AlbumCarousel: React.FC = () => {
                             <div
                                 key={album.id}
                                 className={`alb${active ? " active" : ""}${active && moving ? " moving" : ""}`}
-                                style={getAlbumStyle(i, flowIndex)}
+                                style={getAlbumStyle(i, flowIndex, windowWidth)}
                                 onClick={() => {
                                     if (!active) {
                                         setFlowIndex(i);
