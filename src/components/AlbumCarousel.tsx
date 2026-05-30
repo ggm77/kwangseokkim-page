@@ -13,12 +13,14 @@ function getAlbumStyle(i: number, flowIndex: number): React.CSSProperties {
     const x = off * 198;
     const rot = off === 0 ? 0 : off < 0 ? 40 : -40;
     const scale = off === 0 ? 1.1 : 1 - Math.min(abs, 3) * 0.08;
-    // no translateZ — keeps all albums in z=0 plane so pointer-events work correctly
+    // abs >= 3: the "opposite" album — hide it
+    const hidden = abs >= 3;
     return {
         transform: `translate(-50%,-50%) translateX(${x}px) rotateY(${rot}deg) scale(${scale})`,
-        opacity: 1,
+        opacity: hidden ? 0 : 1,
         zIndex: 100 - abs,
         filter: off === 0 ? "none" : `brightness(${0.8 - abs * 0.06})`,
+        pointerEvents: hidden ? "none" : "auto",
     };
 }
 
@@ -26,7 +28,6 @@ export const AlbumCarousel: React.FC = () => {
     const { startMedia, resetPlayer } = useYTPlayer();
     const navigate = useNavigate();
     const [flowIndex, setFlowIndex] = useState(0);
-    const [chipOpen, setChipOpen] = useState(false);
 
     useEffect(() => {
         resetPlayer();
@@ -37,7 +38,6 @@ export const AlbumCarousel: React.FC = () => {
         const handler = (e: KeyboardEvent) => {
             if (e.key === "ArrowLeft")  setFlowIndex(i => (i - 1 + N) % N);
             if (e.key === "ArrowRight") setFlowIndex(i => (i + 1) % N);
-            if (e.key === "Escape")     setChipOpen(false);
         };
         window.addEventListener("keydown", handler);
         return () => window.removeEventListener("keydown", handler);
@@ -86,17 +86,9 @@ export const AlbumCarousel: React.FC = () => {
                         return (
                             <div
                                 key={album.id}
-                                className={`alb${active ? " active" : ""}${active && chipOpen ? " chip-open" : ""}`}
+                                className={`alb${active ? " active" : ""}`}
                                 style={getAlbumStyle(i, flowIndex)}
-                                onClick={() => {
-                                    if (!active) {
-                                        // center the album AND open the media chips in one click
-                                        setFlowIndex(i);
-                                        setChipOpen(true);
-                                    } else {
-                                        setChipOpen(v => !v);
-                                    }
-                                }}
+                                onClick={() => { if (!active) setFlowIndex(i); }}
                             >
                                 <div className="cover">
                                     <img

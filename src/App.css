@@ -212,7 +212,7 @@
     left: 50%;
     width: 228px;
     height: 228px;
-    transition: transform .7s cubic-bezier(.22,.75,.2,1), filter .6s;
+    transition: transform .7s cubic-bezier(.22,.75,.2,1), filter .6s, opacity .4s;
     cursor: pointer;
     will-change: transform;
 }
@@ -260,7 +260,7 @@
 }
 .alb.active .titleplate { opacity: 1; }
 
-/* media chips — revealed on active album hover OR click (chip-open) */
+/* media chips — revealed on hover of active album */
 .alb .media {
     position: absolute;
     top: 50%;
@@ -273,10 +273,8 @@
     z-index: 5;
     transition: opacity .2s;
 }
-.alb.active:hover .media,
-.alb.active.chip-open .media   { opacity: 1; pointer-events: auto; }
-.alb.active:hover .cover,
-.alb.active.chip-open .cover   { filter: brightness(.42) saturate(.7); }
+.alb.active:hover .media  { opacity: 1; pointer-events: auto; }
+.alb.active:hover .cover  { filter: brightness(.42) saturate(.7); }
 
 .media-chip {
     width: 98px;
