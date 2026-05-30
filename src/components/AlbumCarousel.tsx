@@ -16,7 +16,7 @@ function getAlbumStyle(i: number, flowIndex: number): React.CSSProperties {
     // abs >= 3: the "opposite" album — hide it
     const hidden = abs >= 3;
     return {
-        transform: `translate(-50%,-50%) translateX(${x}px) rotateY(${rot}deg) scale(${scale})`,
+        transform: `translate(-50%,-50%) translateX(${x}px) perspective(2200px) rotateY(${rot}deg) scale(${scale})`,
         opacity: hidden ? 0 : 1,
         zIndex: 100 - abs,
         filter: off === 0 ? "none" : `brightness(${0.8 - abs * 0.06})`,
