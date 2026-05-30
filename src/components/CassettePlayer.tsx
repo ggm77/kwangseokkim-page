@@ -349,6 +349,7 @@ export const CassettePlayer: React.FC = () => {
                     activeAlbum={activeAlbum} 
                     currentSide={viewSide} 
                     onSleeveClick={() => setViewSide(viewSide === 'A' ? 'B' : 'A')}
+                    mediaType="cassette"
                 />
 
                 {/* Right/Center: Large Interactive Cassette Player */}

@@ -7,9 +7,10 @@ interface Props {
     activeAlbum: Album;
     currentSide: 'A' | 'B';
     onSleeveClick?: () => void;
+    mediaType?: 'lp' | 'cassette';
 }
 
-export const AlbumSleeve: React.FC<Props> = ({ activeAlbum, currentSide, onSleeveClick }) => {
+export const AlbumSleeve: React.FC<Props> = ({ activeAlbum, currentSide, onSleeveClick, mediaType = 'lp' }) => {
     const isFlipped = currentSide === 'B';
 
     return (
@@ -28,7 +29,8 @@ export const AlbumSleeve: React.FC<Props> = ({ activeAlbum, currentSide, onSleev
                                         ANALOG<br />STEREO
                                     </div>
                                     <div className="header-right">
-                                        33⅓ RPM<br /><span className="hi-fi">HI-FI</span>
+                                        {mediaType === 'lp' && <>33⅓ RPM<br /></>}
+                                        <span className="hi-fi">HI-FI</span>
                                     </div>
                                 </div>
                                 <div className="sleeve-cover-container">
@@ -51,7 +53,8 @@ export const AlbumSleeve: React.FC<Props> = ({ activeAlbum, currentSide, onSleev
                                         ANALOG<br />STEREO
                                     </div>
                                     <div className="header-right">
-                                        33⅓ RPM<br /><span className="hi-fi">HI-FI</span>
+                                        {mediaType === 'lp' && <>33⅓ RPM<br /></>}
+                                        <span className="hi-fi">HI-FI</span>
                                     </div>
                                 </div>
                                 <div className="sleeve-cover-container">
