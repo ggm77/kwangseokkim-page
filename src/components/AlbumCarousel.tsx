@@ -103,8 +103,8 @@ export const AlbumCarousel: React.FC = () => {
             const absX = Math.abs(e.deltaX);
             const absY = Math.abs(e.deltaY);
             
-            // Lowered threshold to trigger wheel scrolling earlier (from 5 to 2)
-            if (absX < 2 && absY < 2) return;
+            // Adjusted threshold to trigger wheel scrolling at delta 3
+            if (absX < 3 && absY < 3) return;
 
             const now = Date.now();
             // Reduced cooldown throttling (from 450ms to 220ms) for high responsiveness
