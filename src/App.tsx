@@ -84,6 +84,9 @@ function App() {
                         <p className="contact-email">
                             문의 및 피드백 : <a href="mailto:shm040806@gmail.com">shm040806@gmail.com</a>
                         </p>
+                        <p className="github-link" style={{ fontSize: '11px', marginTop: '8px', color: 'var(--ink-faint)', opacity: 0.8 }}>
+                            GitHub: <a href="https://github.com/ggm77" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline' }}>ggm77</a>
+                        </p>
                     </footer>
                 </div>
             </BrowserRouter>

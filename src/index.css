@@ -66,8 +66,12 @@ html, body {
 
 body {
   background:
-    radial-gradient(120% 90% at 50% -10%, rgba(255,247,228,.7), transparent 55%),
-    radial-gradient(150% 120% at 50% 120%, rgba(60,48,34,.22), transparent 60%),
+    /* Premium warm gallery spotlight centered on the carousel */
+    radial-gradient(100% 80% at 50% 50%, rgba(255, 252, 243, 0.82) 0%, rgba(231, 222, 203, 0.25) 60%, transparent 100%),
+    /* Top ambient lighting */
+    radial-gradient(120% 90% at 50% -10%, rgba(255, 247, 228, 0.85), transparent 55%),
+    /* Soft ground shadow vignette */
+    radial-gradient(140% 100% at 50% 110%, rgba(70, 55, 40, 0.25), transparent 60%),
     var(--paper);
   min-height: 100vh;
   text-rendering: optimizeLegibility;

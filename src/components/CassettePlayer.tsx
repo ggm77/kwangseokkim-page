@@ -37,14 +37,15 @@ export const CassettePlayer: React.FC = () => {
     const [isFF, setIsFF] = useState<boolean>(false);
     const [isREW, setIsREW] = useState<boolean>(false);
     const [playIntent, setPlayIntent] = useState<boolean>(false);
-    const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth <= 860);
+    const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth <= 800);
+    const [viewSide, setViewSide] = useState<"A" | "B">(currentSide || "A");
 
     // Keep a ref to the latest play function so setTimeout always calls the current version
     const playRef = useRef(play);
     useEffect(() => { playRef.current = play; }, [play]);
 
     useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth <= 860);
+        const handleResize = () => setIsMobile(window.innerWidth <= 800);
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
@@ -89,10 +90,11 @@ export const CassettePlayer: React.FC = () => {
         durationRef.current = duration;
     }, [duration]);
 
-    // Sync isFlipped with currentSide
+    // Sync isFlipped and viewSide with currentSide
     useEffect(() => {
         // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing local isFlipped to the external store's currentSide
         setIsFlipped(currentSide === "B");
+        setViewSide(currentSide || "A");
     }, [currentSide]);
 
     const tracksList = currentSide === "A" ? activeAlbum?.tracksSideA : activeAlbum?.tracksSideB;
@@ -260,7 +262,7 @@ export const CassettePlayer: React.FC = () => {
                         <span className="side-indicator font-retro">{sideName}</span>
                         <div className="sticker-titles">
                             <div className="song-title">{activeAlbum.title}</div>
-                            <div className="album-title-sticker">김광석 (Kim Kwang-seok)</div>
+                            <div className="album-title-sticker">김광석 <span className="eng-name">(Kim Kwang-seok)</span></div>
                         </div>
                         <span className="dolby-logo">DO DO[BY SYSTEM]</span>
                     </div>
@@ -343,7 +345,12 @@ export const CassettePlayer: React.FC = () => {
 
             <div className="player-main-layout">
                 {/* Left: Disguised Youtube Iframe (The "Album Sleeve") */}
-                <AlbumSleeve activeAlbum={activeAlbum} currentSide={currentSide} />
+                <AlbumSleeve 
+                    activeAlbum={activeAlbum} 
+                    currentSide={viewSide} 
+                    onSleeveClick={() => setViewSide(viewSide === 'A' ? 'B' : 'A')}
+                    mediaType="cassette"
+                />
 
                 {/* Right/Center: Large Interactive Cassette Player */}
                 <div className="player-column">
