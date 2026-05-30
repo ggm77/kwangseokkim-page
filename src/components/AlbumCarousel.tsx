@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { ALBUMS } from "../data/albums";
 import type { Album } from "../data/albums";
@@ -28,9 +28,12 @@ export const AlbumCarousel: React.FC = () => {
     const { startMedia, resetPlayer } = useYTPlayer();
     const navigate = useNavigate();
     const [flowIndex, setFlowIndex] = useState(0);
+    const [moving, setMoving] = useState(false);
+    const moveTimerRef = useRef<number | null>(null);
 
     useEffect(() => {
         resetPlayer();
+        return () => { if (moveTimerRef.current) clearTimeout(moveTimerRef.current); };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -86,9 +89,16 @@ export const AlbumCarousel: React.FC = () => {
                         return (
                             <div
                                 key={album.id}
-                                className={`alb${active ? " active" : ""}`}
+                                className={`alb${active ? " active" : ""}${active && moving ? " moving" : ""}`}
                                 style={getAlbumStyle(i, flowIndex)}
-                                onClick={() => { if (!active) setFlowIndex(i); }}
+                                onClick={() => {
+                                    if (!active) {
+                                        setFlowIndex(i);
+                                        setMoving(true);
+                                        if (moveTimerRef.current) clearTimeout(moveTimerRef.current);
+                                        moveTimerRef.current = window.setTimeout(() => setMoving(false), 720);
+                                    }
+                                }}
                             >
                                 <div className="cover">
                                     <img
