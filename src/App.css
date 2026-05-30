@@ -617,6 +617,7 @@
     aspect-ratio: 1;
     border: 1px solid rgba(34, 28, 21, 0.06);
     position: relative;
+    flex-shrink: 0;
 }
 .sleeve-cover-container .youtube-player-frame-outer {
     position: absolute;
