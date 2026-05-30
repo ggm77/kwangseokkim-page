@@ -108,7 +108,7 @@
     align-items: baseline;
     justify-content: space-between;
     flex: none;
-    padding: 20px 0 12px;
+    padding: 30px 0 18px;
     border-bottom: 1px solid var(--line);
 }
 .home-top .meta {
@@ -123,10 +123,11 @@
 .hero {
     flex: 1;
     min-height: 0;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: clamp(10px, 1.6vh, 20px) 0;
+    padding: clamp(22px, 3.5vh, 40px) 0 clamp(18px, 2.5vh, 30px);
     max-width: 1040px;
 }
 .eyebrow {
@@ -137,30 +138,30 @@
     color: var(--persimmon);
     font-weight: 500;
     display: block;
-    margin-bottom: clamp(8px, 1vh, 14px);
+    margin-bottom: 16px;
 }
-.hero .eyebrow { margin-bottom: clamp(8px, 1vh, 14px); }
+.hero .eyebrow { margin-bottom: 16px; }
 .rule {
     width: 64px;
     height: 2px;
     background: var(--ink);
-    margin: 0 0 clamp(8px, 1vh, 14px);
+    margin: 0 0 20px;
 }
 .hero h1 {
     font-family: var(--serif-ko);
     font-weight: 800;
-    font-size: clamp(26px, 3.4vw, 46px);
+    font-size: clamp(32px, 4.4vw, 56px);
     line-height: 1.08;
     letter-spacing: -.01em;
-    margin: 0 0 clamp(8px, 1.2vh, 16px);
+    margin: 0 0 20px;
 }
 .hero h1 em {
     font-style: normal;
     color: var(--persimmon);
 }
 .hero p {
-    font-size: clamp(13px, 1.1vw, 16px);
-    line-height: 1.75;
+    font-size: clamp(15px, 1.3vw, 18px);
+    line-height: 1.85;
     color: var(--ink-soft);
     max-width: 52ch;
     margin: 0;
@@ -173,7 +174,7 @@
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
 }
 .shelf-hint {
     font-family: var(--mono);
@@ -188,7 +189,7 @@
 .flow {
     position: relative;
     flex: none;
-    height: clamp(260px, 32vh, 360px);
+    height: 384px;
     perspective: 2200px;
     display: flex;
     align-items: center;
@@ -218,7 +219,7 @@
 .flow-track {
     position: relative;
     width: 100%;
-    height: clamp(220px, 28vh, 300px);
+    height: 300px;
 }
 .alb {
     position: absolute;
@@ -330,7 +331,7 @@
     justify-content: space-between;
     align-items: center;
     gap: 20px;
-    padding: clamp(12px, 1.8vh, 20px) 0 clamp(14px, 2vh, 24px);
+    padding: 22px 0 30px;
     font-family: var(--mono);
     font-size: 11px;
     letter-spacing: .2em;
