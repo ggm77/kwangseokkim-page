@@ -15,12 +15,6 @@
     max-width: 100%;
     overflow-x: hidden;
 }
-/* Home page: lock the whole page to one viewport so footer stays inside */
-.app-container:has(.home) {
-    height: 100vh;
-    height: 100dvh;
-    overflow: hidden;
-}
 
 /* ------------------------------------------------
    HEADER — brand mark
@@ -96,8 +90,6 @@
    HOME — cover-flow layout
    ------------------------------------------------ */
 .home {
-    height: 100%;
-    min-height: 0;
     display: flex;
     flex-direction: column;
     padding: 0 clamp(20px, 5vw, 80px);
@@ -121,12 +113,7 @@
 
 /* hero */
 .hero {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: clamp(14px, 2.5vh, 40px) 0 clamp(10px, 1.8vh, 30px);
+    padding: clamp(22px, 3.5vh, 40px) 0 clamp(18px, 2.5vh, 30px);
     max-width: 1040px;
 }
 .eyebrow {
