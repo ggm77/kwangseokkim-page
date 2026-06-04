@@ -27,7 +27,7 @@ const Header: React.FC = () => {
         <header className={`site-header ${showHeader ? "scrolled" : ""}`}>
             <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
                 <div className="brand-mark header-brand">
-                    <b>다시부르기: 가객의 앨범들</b>
+                    <b>김광석 다시부르기 | 가객의 앨범들</b>
                 </div>
             </Link>
         </header>
