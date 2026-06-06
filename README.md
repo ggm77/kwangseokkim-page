@@ -6,7 +6,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-6.0-3178C6?logo=typescript)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite)](https://vite.dev/)
 
-**개발 기간**: 2026.05.22 ~
+**개발 기간**: 2026.05.22 ~ 2026.06.05
 
 ---
 
